@@ -106,7 +106,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:r
 </style>
 </head>
 <body>
-
+ 
 <!-- REGISTER -->
 <div class="screen active" id="sc-register">
   <div class="topbar">
@@ -138,7 +138,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:r
     <div id="reg-err" style="font-size:12px;color:var(--red);margin-top:10px;text-align:center"></div>
   </div>
 </div>
-
+ 
 <!-- SESSION -->
 <div class="screen" id="sc-session">
   <div class="topbar">
@@ -164,7 +164,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:r
     <button class="btn-green" onclick="finishSession()" style="flex:1.4">Save results</button>
   </div>
 </div>
-
+ 
 <!-- RANKINGS -->
 <div class="screen" id="sc-rankings">
   <div class="topbar">
@@ -178,7 +178,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:r
   </div>
   <div class="scroll-body"><div id="rankings-body"></div></div>
 </div>
-
+ 
 <!-- HISTORY -->
 <div class="screen" id="sc-history">
   <div class="topbar">
@@ -192,7 +192,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:r
   </div>
   <div class="scroll-body" id="history-body"></div>
 </div>
-
+ 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <div class="nav-item active" id="nav-register" onclick="showScreen('register')">
@@ -229,14 +229,13 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:r
     <span class="nav-label">History</span>
   </div>
 </nav>
-
+ 
 <div class="toast" id="toast"></div>
-<div id="debug-panel" style="position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#0f0;font-size:11px;padding:8px 12px;z-index:9999;font-family:monospace;line-height:1.6;max-height:160px;overflow:auto">Waiting for Firebase...</div>
-
-<!-- Firebase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.js"></script>
-
+ 
+<!-- Firebase SDK - primary -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+ 
 <script>
 // ── Firebase init ──
 var firebaseConfig = {
@@ -250,7 +249,7 @@ var firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
-
+ 
 // ── Palettes ──
 var PALETTES=[
   {bg:'#1a3a5c',txt:'#7EC8F0'},{bg:'#1a3d2b',txt:'#5ECC8A'},
@@ -259,7 +258,7 @@ var PALETTES=[
   {bg:'#1a3a35',txt:'#5EC8BE'},{bg:'#3a2e1a',txt:'#D4B05E'},
   {bg:'#1a2a3d',txt:'#5E8AF0'},{bg:'#2d3a1a',txt:'#9AC85E'}
 ];
-
+ 
 // ── State (all sourced from Firebase) ──
 var players = [];
 var rounds = [];
@@ -267,30 +266,30 @@ var sessionHistory = [];
 var lastSessionDate = '';
 var isLight = false;
 var isConnected = false;
-
+ 
 var dateStr = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 document.getElementById('top-date').textContent = dateStr;
-
+ 
 // ── Helpers ──
 function ini(n){return n.slice(0,2).toUpperCase();}
-
+ 
 function avEl(p,size){
   var c=PALETTES[p.color%PALETTES.length];
   return '<div class="mini-av" style="width:'+size+'px;height:'+size+'px;background:'+c.bg+';color:'+c.txt+'">'+ini(p.name)+'</div>';
 }
-
+ 
 function showToast(msg){
   var t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(function(){t.classList.remove('show');},2500);
 }
-
+ 
 function setSyncDot(online){
   var d=document.getElementById('sync-dot');
   isConnected=online;
   if(online){d.classList.remove('off');}else{d.classList.add('off');}
 }
-
+ 
 // ── Theme ──
 function toggleTheme(){
   isLight=!isLight;
@@ -298,7 +297,7 @@ function toggleTheme(){
   var icon=isLight?'☀️':'🌙';
   document.querySelectorAll('.theme-btn').forEach(function(b){b.textContent=icon;});
 }
-
+ 
 // ── Screen nav ──
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
@@ -308,14 +307,14 @@ function showScreen(id){
   if(id==='rankings') renderRankings();
   if(id==='history') renderHistory();
 }
-
+ 
 // ── Firebase listeners ──
 function initFirebase(){
   // Connection status
   db.ref('.info/connected').on('value',function(snap){
     setSyncDot(snap.val()===true);
   });
-
+ 
   // Players
   db.ref('players').on('value',function(snap){
     var data=snap.val();
@@ -327,15 +326,11 @@ function initFirebase(){
     renderPills();
     renderRankings();
   });
-
+ 
   // Current session rounds
   db.ref('session/rounds').on('value',function(snap){
     var data=snap.val();
-    
-    // DEBUG - show on screen
-    var dbg=document.getElementById('debug-panel');
-    if(dbg) dbg.innerHTML='<b>Firebase raw:</b> '+(data?JSON.stringify(data).slice(0,200):'null')+'<br><b>Type:</b> '+typeof data+'<br><b>IsArray:</b> '+Array.isArray(data);
-
+ 
     if(!data){
       rounds=[];
     } else if(Array.isArray(data)){
@@ -361,15 +356,13 @@ function initFirebase(){
         isExtra:round.isExtra||false
       };
     });
-
-    if(dbg) dbg.innerHTML+='<br><b>Rounds parsed:</b> '+rounds.length;
-
+ 
     renderSession();
     renderRankings();
     var liveEl=document.getElementById('live-badge');
     if(liveEl) liveEl.style.display=rounds.length?'inline-block':'none';
   });
-
+ 
   // Session history
   db.ref('history').on('value',function(snap){
     var data=snap.val();
@@ -400,7 +393,7 @@ function initFirebase(){
     renderRankings();
   });
 }
-
+ 
 // ── Register ──
 function renderPills(){
   var sel=players.filter(function(p){return p.active;}).length;
@@ -416,19 +409,19 @@ function renderPills(){
     +'</div>';
   }).join('');
 }
-
+ 
 function togglePlayer(name){
   var p=players.find(function(x){return x.name===name;});
   if(!p)return;
   db.ref('players/'+name+'/active').set(!p.active);
 }
-
+ 
 function removePlayer(e,name){
   e.stopPropagation();
   if(!confirm('Remove '+name+' from the community?'))return;
   db.ref('players/'+name).remove();
 }
-
+ 
 function addPlayer(){
   var inp=document.getElementById('new-name');
   var name=inp.value.trim();
@@ -442,14 +435,14 @@ function addPlayer(){
   showToast(name+' added!');
 }
 document.getElementById('new-name').addEventListener('keydown',function(e){if(e.key==='Enter')addPlayer();});
-
+ 
 // ── Session generation ──
 function shuffle(arr){
   var a=arr.slice();
   for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
   return a;
 }
-
+ 
 function buildRound(pool,sitters,isExtra){
   var sh=shuffle(pool);
   var courts=[];
@@ -463,19 +456,19 @@ function buildRound(pool,sitters,isExtra){
   }
   return {courts:courts,sitting:sitters.map(function(s){return s.name;}),isExtra:isExtra||false};
 }
-
+ 
 function generateSession(){
   var active=players.filter(function(p){return p.active;});
   var err=document.getElementById('reg-err');
   if(active.length<4){err.textContent='Need at least 4 players selected.';return;}
   err.textContent='';
-
+ 
   var sitOutPerRound=Math.max(0,active.length-8);
   var maxR=10;
   var newRounds=[];
   var sitCount={};
   active.forEach(function(p){sitCount[p.name]=0;});
-
+ 
   for(var r=0;r<maxR;r++){
     var sitters=[];
     if(sitOutPerRound>0){
@@ -486,13 +479,13 @@ function generateSession(){
     var pool=active.filter(function(p){return !sitters.some(function(s){return s.name===p.name;});});
     newRounds.push(buildRound(pool,sitters,false));
   }
-
+ 
   db.ref('session/rounds').set(newRounds);
   db.ref('session/date').set(dateStr);
   showToast('Session generated!');
   showScreen('session');
 }
-
+ 
 function addRound(){
   var active=players.filter(function(p){return p.active;});
   if(active.length<4)return;
@@ -517,7 +510,7 @@ function addRound(){
     var s=document.getElementById('session-scroll');s.scrollTop=s.scrollHeight;
   },400);
 }
-
+ 
 // ── Score ──
 function changeScore(ri,ci,team,delta){
   var c=rounds[ri].courts[ci];
@@ -533,7 +526,7 @@ function changeScore(ri,ci,team,delta){
   }
   db.ref('session/rounds/'+ri+'/courts/'+ci).update({scoreA:newA,scoreB:newB});
 }
-
+ 
 // ── Session render ──
 function courtHTML(ri,ci,court){
   return '<div class="court-card">'
@@ -556,7 +549,7 @@ function courtHTML(ri,ci,court){
     +'</div>'
   +'</div>';
 }
-
+ 
 function renderSession(){
   var active=players.filter(function(p){return p.active;});
   document.getElementById('session-meta').textContent=
@@ -574,17 +567,17 @@ function renderSession(){
   });
   document.getElementById('session-rounds').innerHTML=html;
 }
-
+ 
 // ── Finish session ──
 function finishSession(){
   if(!rounds.length){showToast('No rounds to save');return;}
   if(!confirm('Save results and update rankings?'))return;
-
+ 
   var active=players.filter(function(p){return p.active;});
   var now=new Date();
   var snapDate=now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   var snapTime=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-
+ 
   // Compute session stats for snapshot
   var sessionStats={};
   active.forEach(function(p){sessionStats[p.name]={name:p.name,color:p.color,played:0,won:0,lost:0,draw:0,score:0,totalPts:0};});
@@ -606,7 +599,7 @@ function finishSession(){
     });
   });
   var sessionRanking=Object.values(sessionStats).sort(function(a,b){return b.totalPts-a.totalPts||b.score-a.score;});
-
+ 
   // Save to history
   var histKey='session_'+now.getTime();
   db.ref('history/'+histKey).set({
@@ -626,7 +619,7 @@ function finishSession(){
       };
     })
   });
-
+ 
   // Update cumulative player stats
   var updates={};
   rounds.forEach(function(round){
@@ -659,17 +652,17 @@ function finishSession(){
       });
     });
   });
-
+ 
   // Deactivate all players, clear session
   active.forEach(function(p){updates['players/'+p.name+'/active']=false;});
   db.ref().update(updates);
   db.ref('session/rounds').set([]);
   db.ref('session/date').set('');
-
+ 
   showToast('Results saved!');
   showScreen('rankings');
 }
-
+ 
 // ── Live rankings compute ──
 function computeLiveStats(){
   var active=players.filter(function(p){return p.active;});
@@ -695,14 +688,14 @@ function computeLiveStats(){
   });
   return Object.values(stats).sort(function(a,b){return b.totalPts-a.totalPts||b.score-a.score;});
 }
-
+ 
 // ── Rankings ──
 function renderRankings(){
   var medals=['&#127945;','&#129352;','&#129353;'];
   var body=document.getElementById('rankings-body');
   var sessionLabel=lastSessionDate?'Session \u00b7 '+lastSessionDate:'Session';
   var h='<div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:14px">'+sessionLabel+'</div>';
-
+ 
   // Live block
   if(rounds.length>0){
     var live=computeLiveStats();
@@ -748,7 +741,7 @@ function renderRankings(){
     }
     h+='</div>';
   }
-
+ 
   // Season total
   var sorted=players.filter(function(p){return p.played>0;}).sort(function(a,b){return b.totalPts-a.totalPts||b.score-a.score;});
   if(sorted.length){
@@ -773,7 +766,7 @@ function renderRankings(){
   }
   body.innerHTML=h;
 }
-
+ 
 // ── History ──
 function renderHistory(){
   var body=document.getElementById('history-body');
@@ -796,7 +789,7 @@ function renderHistory(){
         +'<div class="chevron" id="chev-'+si+'">&#9662;</div>'
       +'</div>'
       +'<div class="sess-body" id="sess-body-'+si+'">';
-
+ 
     // Session ranking
     if(sess.ranking&&sess.ranking.length){
       html+='<div style="padding:12px 16px 0">'
@@ -826,7 +819,7 @@ function renderHistory(){
       });
       html+='</div></div>';
     }
-
+ 
     // Match results
     if(sess.rounds&&sess.rounds.length){
       html+='<div style="padding:0 16px 4px"><div style="font-family:\'Syne\',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin:12px 0 8px">Match Results</div></div>';
@@ -858,7 +851,7 @@ function renderHistory(){
   });
   body.innerHTML=html;
 }
-
+ 
 function toggleSession(si){
   var b=document.getElementById('sess-body-'+si);
   var c=document.getElementById('chev-'+si);
@@ -866,7 +859,7 @@ function toggleSession(si){
   b.classList.toggle('open',!open);
   c.classList.toggle('open',!open);
 }
-
+ 
 // ── Print ──
 function printFixtures(){
   var active=players.filter(function(p){return p.active;});
@@ -909,10 +902,7 @@ function printFixtures(){
   if(win){win.document.write(page);win.document.close();}
   else alert('Please allow pop-ups, then tap Print again.');
 }
-
-// ── Boot ──
-var DEFAULT_PLAYERS=['Rizky','Made','Hendro','Firdaus','Nazar','Farid','Aris','Hari','Uray','LBP'];
-
+ 
 function seedDefaultPlayers(){
   db.ref('players').once('value',function(snap){
     if(!snap.val()){
@@ -926,14 +916,19 @@ function seedDefaultPlayers(){
     }
   });
 }
-
-if(typeof firebase === 'undefined'){
-  document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:32px;text-align:center;font-family:sans-serif;background:#0F1117;color:#F0F2F7">'
-    +'<div style="font-size:36px;margin-bottom:16px">⚠️</div>'
-    +'<div style="font-size:18px;font-weight:700;margin-bottom:8px">Connection error</div>'
-    +'<div style="font-size:14px;color:#8B90A0;line-height:1.6">Firebase failed to load.<br>Please check your internet connection and reload the page.</div>'
-    +'<button onclick="location.reload()" style="margin-top:24px;padding:12px 24px;background:#00C98D;color:#000;font-weight:700;border:none;border-radius:10px;font-size:14px;cursor:pointer">Reload</button>'
-  +'</div>';
+ 
+// ── Boot ──
+var DEFAULT_PLAYERS=['Rizky','Made','Hendro','Firdaus','Nazar','Farid','Aris','Hari','Uray','LBP'];
+ 
+if(typeof firebase==='undefined'){
+  document.body.insertAdjacentHTML('beforeend',
+    '<div style="position:fixed;inset:0;background:#0F1117;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">'
+    +'<div style="font-size:40px;margin-bottom:16px">⚠️</div>'
+    +'<div style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:12px">Connection error</div>'
+    +'<div style="font-size:14px;color:#8B90A0;line-height:1.7;margin-bottom:24px">Firebase failed to load.<br>Please check your internet connection and reload.</div>'
+    +'<button onclick="location.reload()" style="padding:12px 24px;background:#00C98D;color:#000;font-weight:700;border:none;border-radius:10px;font-size:14px;cursor:pointer">Reload</button>'
+    +'</div>'
+  );
 } else {
   seedDefaultPlayers();
   initFirebase();
