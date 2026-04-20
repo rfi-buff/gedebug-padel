@@ -176,7 +176,14 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:r
       <button class="theme-btn" onclick="toggleTheme()">🌙</button>
     </div>
   </div>
-  <div class="scroll-body"><div id="rankings-body"></div></div>
+  <div class="scroll-body">
+    <div id="rankings-body"></div>
+    <div style="padding:0 0 8px">
+      <button onclick="resetAll()" style="width:100%;padding:12px;border-radius:var(--radius-sm);border:0.5px solid rgba(255,91,91,0.4);background:rgba(255,91,91,0.08);color:var(--red);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">
+        Reset all stats &amp; history
+      </button>
+    </div>
+  </div>
 </div>
  
 <!-- HISTORY -->
@@ -858,6 +865,33 @@ function toggleSession(si){
   var open=b.classList.contains('open');
   b.classList.toggle('open',!open);
   c.classList.toggle('open',!open);
+}
+ 
+// ── Reset ──
+function resetAll(){
+  if(!confirm('Reset ALL stats and history?\n\nThis will clear:\n• All player stats (GP, W, L, D, Score, Pts)\n• All session history\n• Current active session\n\nThis cannot be undone!')) return;
+  if(!confirm('Are you sure? This will permanently delete all data!')) return;
+ 
+  // Reset all player stats
+  var updates={};
+  players.forEach(function(p){
+    updates['players/'+p.name+'/played']=0;
+    updates['players/'+p.name+'/won']=0;
+    updates['players/'+p.name+'/lost']=0;
+    updates['players/'+p.name+'/draw']=0;
+    updates['players/'+p.name+'/score']=0;
+    updates['players/'+p.name+'/totalPts']=0;
+    updates['players/'+p.name+'/active']=false;
+  });
+  db.ref().update(updates);
+ 
+  // Clear history, session and rounds
+  db.ref('history').remove();
+  db.ref('session').remove();
+ 
+  lastSessionDate='';
+  showToast('All stats and history reset!');
+  showScreen('rankings');
 }
  
 // ── Print ──
