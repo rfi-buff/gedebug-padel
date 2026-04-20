@@ -585,9 +585,11 @@ function finishSession(){
   var snapDate=now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   var snapTime=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
  
-  // Compute session stats for snapshot
+  // Compute THIS session's stats only (always starts from zero)
   var sessionStats={};
-  active.forEach(function(p){sessionStats[p.name]={name:p.name,color:p.color,played:0,won:0,lost:0,draw:0,score:0,totalPts:0};});
+  active.forEach(function(p){
+    sessionStats[p.name]={name:p.name,color:p.color,played:0,won:0,lost:0,draw:0,score:0,totalPts:0};
+  });
   rounds.forEach(function(round){
     round.courts.forEach(function(court){
       var sA=court.scoreA,sB=court.scoreB;
@@ -627,41 +629,28 @@ function finishSession(){
     })
   });
  
-  // Update cumulative player stats
+  // Reset ALL players stats to zero first, then write this session's stats only
   var updates={};
-  rounds.forEach(function(round){
-    round.courts.forEach(function(court){
-      var sA=court.scoreA,sB=court.scoreB;
-      if(sA+sB===0)return;
-      var isDraw=sA===sB;
-      court.teamA.forEach(function(p){
-        var pl=players.find(function(x){return x.name===p.name;});if(!pl)return;
-        updates['players/'+p.name+'/played']=(pl.played||0)+1;
-        updates['players/'+p.name+'/score']=(pl.score||0)+sA;
-        if(isDraw) updates['players/'+p.name+'/draw']=(pl.draw||0)+1, updates['players/'+p.name+'/totalPts']=(pl.totalPts||0)+1;
-        else if(sA>sB) updates['players/'+p.name+'/won']=(pl.won||0)+1, updates['players/'+p.name+'/totalPts']=(pl.totalPts||0)+3;
-        else updates['players/'+p.name+'/lost']=(pl.lost||0)+1;
-        // Reflect locally for stacking multiple courts per player
-        pl.played=(updates['players/'+p.name+'/played']||pl.played);
-        pl.score=(updates['players/'+p.name+'/score']||pl.score);
-        if(isDraw){pl.draw++;pl.totalPts+=1;}else if(sA>sB){pl.won++;pl.totalPts+=3;}else pl.lost++;
-      });
-      court.teamB.forEach(function(p){
-        var pl=players.find(function(x){return x.name===p.name;});if(!pl)return;
-        updates['players/'+p.name+'/played']=(pl.played||0)+1;
-        updates['players/'+p.name+'/score']=(pl.score||0)+sB;
-        if(isDraw) updates['players/'+p.name+'/draw']=(pl.draw||0)+1, updates['players/'+p.name+'/totalPts']=(pl.totalPts||0)+1;
-        else if(sB>sA) updates['players/'+p.name+'/won']=(pl.won||0)+1, updates['players/'+p.name+'/totalPts']=(pl.totalPts||0)+3;
-        else updates['players/'+p.name+'/lost']=(pl.lost||0)+1;
-        pl.played=(updates['players/'+p.name+'/played']||pl.played);
-        pl.score=(updates['players/'+p.name+'/score']||pl.score);
-        if(isDraw){pl.draw++;pl.totalPts+=1;}else if(sB>sA){pl.won++;pl.totalPts+=3;}else pl.lost++;
-      });
-    });
+  players.forEach(function(p){
+    updates['players/'+p.name+'/played']=0;
+    updates['players/'+p.name+'/won']=0;
+    updates['players/'+p.name+'/lost']=0;
+    updates['players/'+p.name+'/draw']=0;
+    updates['players/'+p.name+'/score']=0;
+    updates['players/'+p.name+'/totalPts']=0;
+    updates['players/'+p.name+'/active']=false;
   });
  
-  // Deactivate all players, clear session
-  active.forEach(function(p){updates['players/'+p.name+'/active']=false;});
+  // Now write only this session's results
+  Object.values(sessionStats).forEach(function(s){
+    updates['players/'+s.name+'/played']=s.played;
+    updates['players/'+s.name+'/won']=s.won;
+    updates['players/'+s.name+'/lost']=s.lost;
+    updates['players/'+s.name+'/draw']=s.draw;
+    updates['players/'+s.name+'/score']=s.score;
+    updates['players/'+s.name+'/totalPts']=s.totalPts;
+  });
+ 
   db.ref().update(updates);
   db.ref('session/rounds').set([]);
   db.ref('session/date').set('');
