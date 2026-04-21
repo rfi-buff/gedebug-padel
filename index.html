@@ -1220,9 +1220,7 @@ function renderPlayerRanks(){
   if(!wrap)return;
 
   var allPlayers=players.slice().sort(function(a,b){
-    if(a.played>0&&b.played===0)return -1;
-    if(b.played>0&&a.played===0)return 1;
-    return b.totalPts-a.totalPts||b.score-a.score;
+    return (b.totalPts||0)-(a.totalPts||0);
   });
 
   prPlayers=allPlayers;
@@ -1249,9 +1247,8 @@ function renderPrCard(){
   var extra=playerExtras[p.name]||{};
   var wr=p.played?Math.round(p.won/p.played*100):0;
 
-  // Rank among played players
-  var rankedPlayers=prPlayers.filter(function(x){return x.played>0;});
-  var rank=rankedPlayers.findIndex(function(x){return x.name===p.name;});
+  // Rank based on totalPts
+  var rank=prPlayers.findIndex(function(x){return x.name===p.name;});
   var rankLabel=rank>=0?'#'+(rank+1):'-';
   var rankMedal=rank===0?'🥇':rank===1?'🥈':rank===2?'🥉':'';
 
@@ -1295,7 +1292,7 @@ function renderPrCard(){
       +'<div style="font-family:\'Syne\',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px">'+p.name+'</div>'
 
       // Rank badge
-      +(p.played>0
+      +(p.totalPts>0
         ?'<div style="display:inline-block;padding:4px 14px;border-radius:20px;background:var(--green-dim);border:0.5px solid rgba(0,201,141,0.3);font-size:13px;font-weight:600;color:var(--green);margin-bottom:20px">Current Rank '+rankLabel+'</div>'
         :'<div style="display:inline-block;padding:4px 14px;border-radius:20px;background:var(--bg3);font-size:13px;color:var(--text3);margin-bottom:20px">Not yet ranked</div>')
 
@@ -1328,9 +1325,26 @@ function renderPrCard(){
       +'</div>'
 
       // GP + Win%
-      +'<div style="display:flex;justify-content:center;gap:32px">'
+      +'<div style="display:flex;justify-content:center;gap:32px;margin-bottom:14px">'
         +'<div style="text-align:center"><div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:700;color:var(--text)">'+histGP+'</div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em">Games Played</div></div>'
         +'<div style="text-align:center"><div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:700;color:var(--green)">'+(histGP?Math.round(histWon/histGP*100):0)+'%</div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em">Win %</div></div>'
+      +'</div>'
+
+      // Side Pref
+      +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:12px;padding:10px 14px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span style="font-size:14px">🎾</span>'
+          +'<span style="font-size:12px;font-weight:500;color:var(--text2)">Side Preference</span>'
+        +'</div>'
+        +(isAdmin
+          ?'<select id="side-pref-select" onchange="saveSidePref(\''+p.name+'\',this.value)" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:5px 10px;color:var(--text);font-size:13px;font-family:\'DM Sans\',sans-serif;cursor:pointer;outline:none">'
+            +'<option value=""'+(!(extra.sidePref)?'selected':'')+'>Not set</option>'
+            +'<option value="Right"'+(extra.sidePref==='Right'?' selected':'')+'>Right</option>'
+            +'<option value="Left"'+(extra.sidePref==='Left'?' selected':'')+'>Left</option>'
+            +'<option value="Mix"'+(extra.sidePref==='Mix'?' selected':'')+'>Mix</option>'
+          +'</select>'
+          :'<span style="font-size:13px;font-weight:600;color:var(--text)">'+(extra.sidePref||'Not set')+'</span>'
+        )
       +'</div>'
 
     +'</div>'
@@ -1350,6 +1364,12 @@ function renderPrDots(){
   dotsEl.innerHTML=prPlayers.map(function(p,i){
     return '<div style="width:'+(i===prIndex?'20':'7')+'px;height:7px;border-radius:4px;background:'+(i===prIndex?'var(--green)':'var(--border2)')+';transition:all 0.2s"></div>';
   }).join('');
+}
+
+function saveSidePref(name,val){
+  if(!isAdmin)return;
+  db.ref('playerExtras/'+name+'/sidePref').set(val);
+  showToast(name+' side preference saved!');
 }
 
 function prGoTo(i){
