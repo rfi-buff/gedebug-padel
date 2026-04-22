@@ -884,22 +884,40 @@ function changeScore(ri,ci,team,delta){
 }
 
 function courtHTML(ri,ci,court){
+  var sA=court.scoreA,sB=court.scoreB;
+  var hasScore=sA+sB>0;
+  var aWins=hasScore&&sA>sB;
+  var bWins=hasScore&&sB>sA;
+  var isDraw=hasScore&&sA===sB;
+
+  var teamAColor=aWins?'var(--green)':isDraw?'var(--amber)':'var(--text)';
+  var teamBColor=bWins?'var(--green)':isDraw?'var(--amber)':'var(--text)';
+  var scoreAColor=aWins?'var(--green)':isDraw?'var(--amber)':bWins?'var(--red)':'var(--text)';
+  var scoreBColor=bWins?'var(--green)':isDraw?'var(--amber)':aWins?'var(--red)':'var(--text)';
+
   var adminControls=currentUser
     ?'<div class="score-block">'
-      +'<div class="score-row"><button class="sc-btn" onclick="changeScore('+ri+','+ci+',\'A\',-1)">&#8722;</button><div class="sc-val" id="sv-'+ri+'-'+ci+'-A">'+court.scoreA+'</div><button class="sc-btn" onclick="changeScore('+ri+','+ci+',\'A\',1)">+</button></div>'
-      +'<div class="score-row"><button class="sc-btn" onclick="changeScore('+ri+','+ci+',\'B\',-1)">&#8722;</button><div class="sc-val" id="sv-'+ri+'-'+ci+'-B">'+court.scoreB+'</div><button class="sc-btn" onclick="changeScore('+ri+','+ci+',\'B\',1)">+</button></div>'
+      +'<div class="score-row"><button class="sc-btn" onclick="changeScore('+ri+','+ci+',\'A\',-1)">&#8722;</button><div class="sc-val" id="sv-'+ri+'-'+ci+'-A" style="color:'+scoreAColor+'">'+sA+'</div><button class="sc-btn" onclick="changeScore('+ri+','+ci+',\'A\',1)">+</button></div>'
+      +'<div class="score-row"><button class="sc-btn" onclick="changeScore('+ri+','+ci+',\'B\',-1)">&#8722;</button><div class="sc-val" id="sv-'+ri+'-'+ci+'-B" style="color:'+scoreBColor+'">'+sB+'</div><button class="sc-btn" onclick="changeScore('+ri+','+ci+',\'B\',1)">+</button></div>'
     +'</div>'
     :'<div style="text-align:center;flex-shrink:0;padding:0 8px">'
-      +'<div style="font-family:\'Syne\',sans-serif;font-size:22px;font-weight:700;color:var(--text)" id="sv-'+ri+'-'+ci+'-A">'+court.scoreA+'</div>'
+      +'<div style="font-family:\'Syne\',sans-serif;font-size:22px;font-weight:700;color:'+scoreAColor+'" id="sv-'+ri+'-'+ci+'-A">'+sA+'</div>'
       +'<div style="font-size:11px;color:var(--text3)">vs</div>'
-      +'<div style="font-family:\'Syne\',sans-serif;font-size:22px;font-weight:700;color:var(--text)" id="sv-'+ri+'-'+ci+'-B">'+court.scoreB+'</div>'
+      +'<div style="font-family:\'Syne\',sans-serif;font-size:22px;font-weight:700;color:'+scoreBColor+'" id="sv-'+ri+'-'+ci+'-B">'+sB+'</div>'
     +'</div>';
-  return '<div class="court-card">'
+
+  return '<div class="court-card" style="'+(aWins?'border-color:rgba(0,201,141,0.3)':bWins?'border-color:rgba(0,201,141,0.3)':'')+'">'
     +'<div class="court-label">Court '+(ci+1)+'</div>'
     +'<div class="match-row">'
-      +'<div class="team-block"><div class="team-p">'+court.teamA[0].name+'</div><div class="team-p">'+court.teamA[1].name+'</div></div>'
+      +'<div class="team-block">'
+        +'<div class="team-p" style="color:'+teamAColor+';font-weight:'+(aWins?'700':'500')+'">'+court.teamA[0].name+(aWins?' 🏆':'')+'</div>'
+        +'<div class="team-p" style="color:'+teamAColor+';font-weight:'+(aWins?'700':'500')+'">'+court.teamA[1].name+'</div>'
+      +'</div>'
       +adminControls
-      +'<div class="team-block r"><div class="team-p">'+court.teamB[0].name+'</div><div class="team-p">'+court.teamB[1].name+'</div></div>'
+      +'<div class="team-block r">'
+        +'<div class="team-p" style="color:'+teamBColor+';font-weight:'+(bWins?'700':'500')+'">'+(bWins?'🏆 ':'')+court.teamB[0].name+'</div>'
+        +'<div class="team-p" style="color:'+teamBColor+';font-weight:'+(bWins?'700':'500')+'">'+court.teamB[1].name+'</div>'
+      +'</div>'
     +'</div>'
   +'</div>';
 }
