@@ -1294,6 +1294,7 @@ function renderPrCard(){
   });
 
   // Calculate best partner from history rounds
+  // In history, teamA/teamB are arrays of plain strings (player names)
   var partnerStats={};
   sessionHistory.forEach(function(sess){
     if(!sess.rounds)return;
@@ -1302,43 +1303,38 @@ function renderPrCard(){
       round.courts.forEach(function(court){
         var sA=court.scoreA||0,sB=court.scoreB||0;
         if(sA+sB===0)return;
-        var isDraw=sA===sB;
-        var teamA=court.teamA,teamB=court.teamB;
-        // Check if player is in teamA
-        var inA=teamA&&teamA.some(function(x){return(x===p.name||(x&&x.name===p.name));});
-        var inB=teamB&&teamB.some(function(x){return(x===p.name||(x&&x.name===p.name));});
-        if(inA){
-          var partner=teamA.find(function(x){return(x!==p.name&&!(x&&x.name===p.name));});
-          var partnerName=partner&&partner.name?partner.name:partner;
-          if(partnerName&&partnerName!==p.name){
-            if(!partnerStats[partnerName])partnerStats[partnerName]={games:0,wins:0};
-            partnerStats[partnerName].games++;
-            if(sA>sB)partnerStats[partnerName].wins++;
-          }
+        var teamA=normalizeArray(court.teamA)||[];
+        var teamB=normalizeArray(court.teamB)||[];
+        // Normalize names — could be string or object
+        var namesA=teamA.map(function(x){return x&&x.name?x.name:x;});
+        var namesB=teamB.map(function(x){return x&&x.name?x.name:x;});
+        function recordPartner(myTeam,won){
+          var idx=myTeam.indexOf(p.name);
+          if(idx===-1)return;
+          myTeam.forEach(function(name){
+            if(name===p.name)return;
+            if(!partnerStats[name])partnerStats[name]={games:0,wins:0};
+            partnerStats[name].games++;
+            if(won)partnerStats[name].wins++;
+          });
         }
-        if(inB){
-          var partner2=teamB.find(function(x){return(x!==p.name&&!(x&&x.name===p.name));});
-          var partnerName2=partner2&&partner2.name?partner2.name:partner2;
-          if(partnerName2&&partnerName2!==p.name){
-            if(!partnerStats[partnerName2])partnerStats[partnerName2]={games:0,wins:0};
-            partnerStats[partnerName2].games++;
-            if(sB>sA)partnerStats[partnerName2].wins++;
-          }
-        }
+        recordPartner(namesA,sA>sB);
+        recordPartner(namesB,sB>sA);
       });
     });
   });
-  // Find best partner by win count, then win%
+  // Find best partner by wins then win%
   var bestPartner=null,bestWins=0,bestPct=0;
   Object.keys(partnerStats).forEach(function(name){
     var s=partnerStats[name];
     var pct=s.games?Math.round(s.wins/s.games*100):0;
     if(s.wins>bestWins||(s.wins===bestWins&&pct>bestPct)){
-      bestWins=s.wins;bestPct=pct;bestPartner={name:name,wins:s.wins,games:s.games,pct:pct};
+      bestWins=s.wins;bestPct=pct;
+      bestPartner={name:name,wins:s.wins,games:s.games,pct:pct};
     }
   });
-    ?'<img src="'+extra.photoURL+'" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--green)">'
-    :'<div style="width:110px;height:110px;border-radius:50%;background:'+c.bg+';color:'+c.txt+';display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-size:36px;font-weight:800;border:3px solid var(--green)">'+ini(p.name)+'</div>';
+
+  var photoHTML=extra.photoURL
 
   var html='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0 4px;overflow:hidden">'
     +'<div style="width:100%;background:var(--bg2);border:0.5px solid var(--border);border-radius:24px;padding:28px 24px;text-align:center;box-shadow:0 0 40px rgba(0,0,0,0.3)">'
