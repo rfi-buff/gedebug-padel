@@ -1293,7 +1293,50 @@ function renderPrCard(){
     });
   });
 
-  var photoHTML=extra.photoURL
+  // Calculate best partner from history rounds
+  var partnerStats={};
+  sessionHistory.forEach(function(sess){
+    if(!sess.rounds)return;
+    sess.rounds.forEach(function(round){
+      if(!round.courts)return;
+      round.courts.forEach(function(court){
+        var sA=court.scoreA||0,sB=court.scoreB||0;
+        if(sA+sB===0)return;
+        var isDraw=sA===sB;
+        var teamA=court.teamA,teamB=court.teamB;
+        // Check if player is in teamA
+        var inA=teamA&&teamA.some(function(x){return(x===p.name||(x&&x.name===p.name));});
+        var inB=teamB&&teamB.some(function(x){return(x===p.name||(x&&x.name===p.name));});
+        if(inA){
+          var partner=teamA.find(function(x){return(x!==p.name&&!(x&&x.name===p.name));});
+          var partnerName=partner&&partner.name?partner.name:partner;
+          if(partnerName&&partnerName!==p.name){
+            if(!partnerStats[partnerName])partnerStats[partnerName]={games:0,wins:0};
+            partnerStats[partnerName].games++;
+            if(sA>sB)partnerStats[partnerName].wins++;
+          }
+        }
+        if(inB){
+          var partner2=teamB.find(function(x){return(x!==p.name&&!(x&&x.name===p.name));});
+          var partnerName2=partner2&&partner2.name?partner2.name:partner2;
+          if(partnerName2&&partnerName2!==p.name){
+            if(!partnerStats[partnerName2])partnerStats[partnerName2]={games:0,wins:0};
+            partnerStats[partnerName2].games++;
+            if(sB>sA)partnerStats[partnerName2].wins++;
+          }
+        }
+      });
+    });
+  });
+  // Find best partner by win count, then win%
+  var bestPartner=null,bestWins=0,bestPct=0;
+  Object.keys(partnerStats).forEach(function(name){
+    var s=partnerStats[name];
+    var pct=s.games?Math.round(s.wins/s.games*100):0;
+    if(s.wins>bestWins||(s.wins===bestWins&&pct>bestPct)){
+      bestWins=s.wins;bestPct=pct;bestPartner={name:name,wins:s.wins,games:s.games,pct:pct};
+    }
+  });
     ?'<img src="'+extra.photoURL+'" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--green)">'
     :'<div style="width:110px;height:110px;border-radius:50%;background:'+c.bg+';color:'+c.txt+';display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-size:36px;font-weight:800;border:3px solid var(--green)">'+ini(p.name)+'</div>';
 
@@ -1349,7 +1392,7 @@ function renderPrCard(){
       +'</div>'
 
       // Side Pref
-      +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:12px;padding:10px 14px">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:12px;padding:10px 14px;margin-bottom:8px">'
         +'<div style="display:flex;align-items:center;gap:8px">'
           +'<span style="font-size:14px">🎾</span>'
           +'<span style="font-size:12px;font-weight:500;color:var(--text2)">Side Preference</span>'
@@ -1362,6 +1405,18 @@ function renderPrCard(){
             +'<option value="Mix"'+(extra.sidePref==='Mix'?' selected':'')+'>Mix</option>'
           +'</select>'
           :'<span style="font-size:13px;font-weight:600;color:var(--text)">'+(extra.sidePref||'Not set')+'</span>'
+        )
+      +'</div>'
+
+      // Best Partner
+      +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:12px;padding:10px 14px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span style="font-size:14px">🤝</span>'
+          +'<span style="font-size:12px;font-weight:500;color:var(--text2)">Best Partner</span>'
+        +'</div>'
+        +(bestPartner
+          ?'<span style="font-size:13px;font-weight:600;color:var(--green)">'+bestPartner.name+' <span style="font-size:11px;color:var(--text3);font-weight:400">('+bestPartner.wins+'W · '+bestPartner.pct+'%)</span></span>'
+          :'<span style="font-size:12px;color:var(--text3)">No data yet</span>'
         )
       +'</div>'
 
