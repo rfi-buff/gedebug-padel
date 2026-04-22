@@ -1293,9 +1293,9 @@ function renderPrCard(){
     });
   });
 
-  // Calculate best partner from history rounds
-  // In history, teamA/teamB are arrays of plain strings (player names)
-  var partnerStats={};
+  // Calculate best partner — mutual pair-based approach
+  // Build global pair stats once from all history
+  var pairStats={};
   sessionHistory.forEach(function(sess){
     if(!sess.rounds)return;
     sess.rounds.forEach(function(round){
@@ -1305,32 +1305,36 @@ function renderPrCard(){
         if(sA+sB===0)return;
         var teamA=normalizeArray(court.teamA)||[];
         var teamB=normalizeArray(court.teamB)||[];
-        // Normalize names — could be string or object
         var namesA=teamA.map(function(x){return x&&x.name?x.name:x;});
         var namesB=teamB.map(function(x){return x&&x.name?x.name:x;});
-        function recordPartner(myTeam,won){
-          var idx=myTeam.indexOf(p.name);
-          if(idx===-1)return;
-          myTeam.forEach(function(name){
-            if(name===p.name)return;
-            if(!partnerStats[name])partnerStats[name]={games:0,wins:0};
-            partnerStats[name].games++;
-            if(won)partnerStats[name].wins++;
-          });
+        function recordPair(team,won){
+          if(team.length<2)return;
+          var key=[team[0],team[1]].sort().join('|');
+          if(!pairStats[key])pairStats[key]={games:0,wins:0};
+          pairStats[key].games++;
+          if(won)pairStats[key].wins++;
         }
-        recordPartner(namesA,sA>sB);
-        recordPartner(namesB,sB>sA);
+        recordPair(namesA,sA>sB);
+        recordPair(namesB,sB>sA);
       });
     });
   });
-  // Find best partner by wins then win%
-  var bestPartner=null,bestWins=0,bestPct=0;
-  Object.keys(partnerStats).forEach(function(name){
-    var s=partnerStats[name];
-    var pct=s.games?Math.round(s.wins/s.games*100):0;
-    if(s.wins>bestWins||(s.wins===bestWins&&pct>bestPct)){
-      bestWins=s.wins;bestPct=pct;
-      bestPartner={name:name,wins:s.wins,games:s.games,pct:pct};
+
+  // Find best partner(s) — all partners sharing the highest win%
+  var bestPct=0,bestWins=0;
+  var bestPartners=[];
+  Object.keys(pairStats).forEach(function(key){
+    var names=key.split('|');
+    if(names.indexOf(p.name)===-1)return;
+    var s=pairStats[key];
+    if(s.games<2)return;
+    var partnerName=names[0]===p.name?names[1]:names[0];
+    var pct=Math.round(s.wins/s.games*100);
+    if(pct>bestPct){
+      bestPct=pct;bestWins=s.wins;
+      bestPartners=[{name:partnerName,wins:s.wins,games:s.games,pct:pct}];
+    } else if(pct===bestPct){
+      bestPartners.push({name:partnerName,wins:s.wins,games:s.games,pct:pct});
     }
   });
 
@@ -1406,12 +1410,12 @@ function renderPrCard(){
 
       // Best Partner
       +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:12px;padding:10px 14px">'
-        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
           +'<span style="font-size:14px">🤝</span>'
           +'<span style="font-size:12px;font-weight:500;color:var(--text2)">Best Partner</span>'
         +'</div>'
-        +(bestPartner
-          ?'<span style="font-size:13px;font-weight:600;color:var(--green)">'+bestPartner.name+' <span style="font-size:11px;color:var(--text3);font-weight:400">('+bestPartner.wins+'W · '+bestPartner.pct+'%)</span></span>'
+        +(bestPartners.length>0
+          ?'<span style="font-size:13px;font-weight:600;color:var(--green);text-align:right">'+bestPartners.map(function(b){return b.name;}).join(' | ')+' <span style="font-size:11px;color:var(--text3);font-weight:400">'+bestPct+'%</span></span>'
           :'<span style="font-size:12px;color:var(--text3)">No data yet</span>'
         )
       +'</div>'
