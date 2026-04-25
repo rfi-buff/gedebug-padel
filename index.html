@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<!--
+==============================================
+  GeDebug Padel App - PRODUCTION
+  Version : v2.0.0
+  Date    : 2026-04-24
+  Modules :
+    css/style.css    - All styles
+    js/firebase.js   - Firebase config & state
+    js/auth.js       - Authentication
+    js/register.js   - Player registration
+    js/matches.js    - Court scoring
+    js/rankings.js   - Rankings & stats
+    js/history.js    - Session history
+    js/players.js    - Player cards
+    js/admin.js      - Admin panel
+    js/app.js        - Navigation & listeners
+==============================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>GeDebug Padel</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="auth-screen" style="">
+  <div style="margin-bottom:16px">
+    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="36" cy="28" rx="22" ry="24" fill="#1F2435" stroke="#00C98D" stroke-width="2.5"/>
+      <line x1="16" y1="20" x2="56" y2="20" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <line x1="14" y1="26" x2="58" y2="26" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <line x1="14" y1="32" x2="58" y2="32" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <line x1="16" y1="38" x2="56" y2="38" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <line x1="20" y1="44" x2="52" y2="44" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <line x1="24" y1="6" x2="24" y2="50" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <line x1="30" y1="4" x2="30" y2="52" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <line x1="36" y1="4" x2="36" y2="52" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <line x1="42" y1="4" x2="42" y2="52" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <line x1="48" y1="6" x2="48" y2="50" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
+      <path d="M28 50 L30 58 L42 58 L44 50" fill="#1F2435" stroke="#00C98D" stroke-width="2"/>
+      <rect x="30" y="57" width="12" height="14" rx="3" fill="#00C98D"/>
+      <line x1="30" y1="62" x2="42" y2="62" stroke="#0F1117" stroke-width="1.2" stroke-opacity="0.4"/>
+      <line x1="30" y1="66" x2="42" y2="66" stroke="#0F1117" stroke-width="1.2" stroke-opacity="0.4"/>
+      <circle cx="54" cy="52" r="7" fill="#FFB547" stroke="#0F1117" stroke-width="1"/>
+      <path d="M48 52 Q51 48 54 52 Q57 56 60 52" stroke="#0F1117" stroke-width="0.8" fill="none"/>
+    </svg>
+  </div>
+  <div class="auth-logo">GeDebug Padel</div>
+  <div class="auth-sub">Al Rayyan Community<br>Sign in to continue</div>
+  <div id="auth-err" class="auth-err"></div>
+  <button class="btn-google" onclick="signInGoogle()">
+    <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+    Continue with Google
+  </button>
+  <div class="auth-divider"><div class="auth-divider-line"></div><span>or</span><div class="auth-divider-line"></div></div>
+  <div style="width:100%">
+    <input class="auth-input" type="email" id="auth-email" placeholder="Email address">
+    <input class="auth-input" type="password" id="auth-password" placeholder="Password">
+    <button class="btn-green" id="auth-submit-btn" onclick="signInEmail()">Sign in</button>
+    <div class="auth-toggle" id="auth-toggle-text">Don't have an account? <span onclick="toggleAuthMode()">Sign up</span></div>
+  </div>
+  <div style="margin-top:20px;font-size:11px;color:var(--text3);text-align:center">View-only access available without login</div>
+  <button onclick="continueAsGuest()" style="margin-top:8px;font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline">Continue as guest (view only)</button>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app" style="display:none;flex:1;flex-direction:column;height:100%;position:relative;">
+
+<!-- REGISTER -->
+<div class="screen active" id="sc-register">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub" id="top-date"></div></div>
+      <div class="topbar-right">
+        <div class="sync-dot off" id="sync-dot"></div>
+        <div id="user-badge"></div>
+        <button id="logout-btn" onclick="signOut()" style="display:none;width:34px;height:34px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg3);cursor:pointer;align-items:center;justify-content:center;font-size:15px" title="Sign out">🚪</button>
+        <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div id="view-only-bar" class="view-only-bar" style="display:none">
+      <span>👁 View only — sign in to participate</span>
+      <button onclick="showAuth()" style="font-size:12px;color:var(--green);background:none;border:none;cursor:pointer;font-weight:600">Sign in</button>
+    </div>
+    <div id="selected-bar" class="selected-bar" style="display:none">
+      <span id="sel-count-label">0 players selected</span>
+      <span style="font-size:12px;color:var(--text2)">tap to deselect</span>
+    </div>
+    <div class="section-label">
+      <span>Community players</span>
+      <button onclick="selectAll()" style="font-size:11px;color:var(--green);background:none;border:none;cursor:pointer;font-weight:600;padding:0" id="select-all-btn">Select All</button>
+    </div>
+    <div class="pills-wrap" id="pill-list"></div>
+    <div id="admin-register-actions" style="display:none">
+      <div class="add-row">
+        <input type="text" id="new-name" placeholder="Add new player..." maxlength="20" onkeydown="if(event.key==='Enter')addPlayer()">
+        <button class="btn-outline" onclick="addPlayer()" style="white-space:nowrap;padding:12px 14px">+ Add</button>
+      </div>
+      <div style="height:16px"></div>
+      <button class="btn-green" onclick="generateSession()">Generate this week's matches</button>
+    </div>
+    <div id="reg-err" style="font-size:12px;color:var(--red);margin-top:10px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- MATCHES -->
+<div class="screen" id="sc-matches">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub" id="session-meta">Matches</div></div>
+      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="scroll-body" id="session-scroll">
+    <div class="empty" id="session-empty">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">No session yet</div>
+      <div class="empty-sub">Go to Register, select players, then tap Generate</div>
+    </div>
+    <div id="session-rounds"></div>
+  </div>
+  <div class="session-actions" id="session-actions" style="display:none">
+    <button class="btn-outline" onclick="addRound()" style="flex:1" id="btn-add-round">+ Round</button>
+    <button class="btn-green" onclick="finishSession()" style="flex:1.4" id="btn-save">Save results</button>
+  </div>
+</div>
+
+<!-- RANKINGS -->
+<div class="screen" id="sc-rankings">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub">Rankings · 1st=10pts · 2nd=8pts · 3rd=6pts · 4th-10th=5pts</div></div>
+      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div id="rankings-body"></div>
+    <div id="admin-reset-btn" style="padding:0 0 8px;display:none">
+      <button onclick="resetAll()" class="btn-red" style="width:100%">Reset all stats &amp; history</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="screen" id="sc-history">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub" id="history-meta">History</div></div>
+      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="scroll-body" id="history-body"></div>
+</div>
+
+<!-- PLAYER RANKS -->
+<div class="screen" id="sc-playerranks">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub" id="playerranks-sub">Player Ranks</div></div>
+      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding-bottom:80px">
+    <div id="pr-dots" style="display:flex;justify-content:center;gap:6px;padding:8px 0 12px;flex-shrink:0"></div>
+    <div style="flex:1;display:flex;align-items:center;gap:0;position:relative">
+      <button id="pr-prev" onclick="prSwipe(-1)" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg3);cursor:pointer;font-size:20px;color:var(--text);display:flex;align-items:center;justify-content:center;margin-left:6px;z-index:2">‹</button>
+      <div id="pr-swipe-wrap" style="flex:1;position:relative;height:100%;touch-action:pan-y"></div>
+      <button id="pr-next" onclick="prSwipe(1)" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg3);cursor:pointer;font-size:20px;color:var(--text);display:flex;align-items:center;justify-content:center;margin-right:6px;z-index:2">›</button>
+    </div>
+    <div style="text-align:center;padding:10px 0;flex-shrink:0">
+      <div id="pr-counter" style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text3)">1 / 1</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="screen" id="sc-admin">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub">Admin panel</div></div>
+      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div class="section-label">Signed in as</div>
+    <div id="admin-user-info" style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:4px;font-size:13px;color:var(--text2)"></div>
+    <button onclick="signOut()" class="btn-red" style="width:100%;margin-bottom:20px">Sign out</button>
+    <div class="section-label">Authorized admins</div>
+    <div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px">
+      <div id="admin-list"></div>
+    </div>
+    <div class="add-row">
+      <input type="email" id="new-admin-email" placeholder="Add admin email..." style="flex:1;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;color:var(--text);font-size:14px;outline:none">
+      <button class="btn-outline" onclick="addAdmin()" style="white-space:nowrap;padding:12px 14px">+ Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <div class="nav-item active" id="nav-register" onclick="showScreen('register')">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" class="nav-fill"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" class="nav-fill"/></svg>
+    <span class="nav-label">Register</span>
+  </div>
+  <div class="nav-item" id="nav-matches" onclick="showScreen('matches')">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6" class="nav-stroke"/><line x1="8" y1="10" x2="16" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" class="nav-stroke"/><line x1="8" y1="14" x2="13" y2="14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" class="nav-stroke"/></svg>
+    <span class="nav-label">Matches</span>
+  </div>
+  <div class="nav-item" id="nav-rankings" onclick="showScreen('rankings')">
+    <div style="position:relative;width:24px;height:24px">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="2" y="14" width="5" height="7" rx="1" class="nav-fill"/><rect x="9.5" y="9" width="5" height="12" rx="1" class="nav-fill" style="opacity:0.7"/><rect x="17" y="4" width="5" height="17" rx="1" class="nav-fill" style="opacity:0.4"/></svg>
+      <div id="live-badge" style="display:none;position:absolute;top:0;right:0;width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite"></div>
+    </div>
+    <span class="nav-label">Rankings</span>
+  </div>
+  <div class="nav-item" id="nav-history" onclick="showScreen('history')">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" class="nav-stroke"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" class="nav-stroke"/></svg>
+    <span class="nav-label">History</span>
+  </div>
+  <div class="nav-item" id="nav-playerranks" onclick="showScreen('playerranks')">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="7" r="3" class="nav-fill"/><path d="M2 19c0-3.3 2.7-5 6-5s6 1.7 6 5" class="nav-fill"/><circle cx="17" cy="8" r="2.5" class="nav-fill" style="opacity:0.6"/><path d="M14.5 19c0-2.5 1.1-4 3.5-4s3.5 1.5 3.5 4" class="nav-fill" style="opacity:0.6"/></svg>
+    <span class="nav-label">Players</span>
+  </div>
+  <div class="nav-item" id="nav-admin" onclick="showScreen('admin')" style="display:none">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 4.8 5.3.8-3.8 3.7.9 5.2L12 14l-4.8 2.5.9-5.2L4.3 7.6l5.3-.8z" class="nav-fill"/></svg>
+    <span class="nav-label">Admin</span>
+  </div>
+</nav>
+
+</div><!-- end main-app -->
+
+<div class="toast" id="toast"></div>
+
+<!-- Edit Scores Modal -->
+<div id="edit-modal">
+  <div style="max-width:430px;margin:0 auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:sticky;top:0;background:rgba(15,17,23,0.95);padding:8px 0;z-index:1">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:#F0F2F7">Edit Scores</div>
+        <div id="edit-modal-date" style="font-size:11px;color:#8B90A0;margin-top:2px"></div>
+      </div>
+      <button onclick="closeEditModal()" style="width:34px;height:34px;border-radius:50%;border:0.5px solid rgba(255,255,255,0.13);background:#1F2435;color:#F0F2F7;font-size:16px;cursor:pointer;flex-shrink:0">✕</button>
+    </div>
+    <div id="edit-modal-body"></div>
+    <div style="margin-top:16px;display:flex;gap:10px">
+      <button onclick="closeEditModal()" style="flex:1;padding:13px;border-radius:10px;border:0.5px solid rgba(255,255,255,0.13);background:transparent;color:#8B90A0;font-size:13px;cursor:pointer">Cancel</button>
+      <button onclick="saveEditedScores()" style="flex:2;padding:13px;border-radius:10px;border:none;background:#00C98D;color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer">Save &amp; Recalculate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<!-- App Modules -->
+<script src="js/firebase.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/register.js"></script>
+<script src="js/matches.js"></script>
+<script src="js/rankings.js"></script>
+<script src="js/history.js"></script>
+<script src="js/players.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
