@@ -15,6 +15,18 @@ function renderPills(){
   if(lbl) lbl.textContent = `${sel} player${sel !== 1 ? 's' : ''} selected`;
   const btn = document.getElementById('select-all-btn');
   if(btn) btn.textContent = (sel === State.players.length && State.players.length > 0) ? 'Deselect All' : 'Select All';
+
+  // Show warning if session is running
+  const err = document.getElementById('reg-err');
+  if(err){
+    if(State.rounds.length > 0){
+      const hasUnfinished = State.rounds.some(r => r.courts.some(c => !c.locked && c.status !== 'done'));
+      err.textContent = hasUnfinished ? '⚠️ A session is currently running. Save results before generating a new one.' : '';
+    } else {
+      err.textContent = '';
+    }
+  }
+
   const list = document.getElementById('pill-list');
   if(!list) return;
   list.innerHTML = State.players.map(p => {
@@ -64,6 +76,19 @@ function addPlayer(){
 
 function generateSession(){
   if(!State.currentUser){ showToast('Please sign in to generate a session'); return; }
+
+  // Check if a session is already running
+  if(State.rounds.length > 0){
+    const hasUnfinished = State.rounds.some(r =>
+      r.courts.some(c => !c.locked && c.status !== 'done')
+    );
+    if(hasUnfinished){
+      const err = document.getElementById('reg-err');
+      err.textContent = 'A session is still running. Save results first before generating a new one.';
+      return;
+    }
+  }
+
   const active = State.players.filter(p => p.active);
   const err = document.getElementById('reg-err');
   if(active.length < 4){ err.textContent = 'Need at least 4 players selected.'; return; }
