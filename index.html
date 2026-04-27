@@ -30,44 +30,57 @@
 <body>
 
 <!-- AUTH SCREEN -->
-<div class="auth-screen" id="auth-screen" style="">
-  <div style="margin-bottom:16px">
-    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="36" cy="28" rx="22" ry="24" fill="#1F2435" stroke="#00C98D" stroke-width="2.5"/>
-      <line x1="16" y1="20" x2="56" y2="20" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <line x1="14" y1="26" x2="58" y2="26" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <line x1="14" y1="32" x2="58" y2="32" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <line x1="16" y1="38" x2="56" y2="38" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <line x1="20" y1="44" x2="52" y2="44" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <line x1="24" y1="6" x2="24" y2="50" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <line x1="30" y1="4" x2="30" y2="52" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <line x1="36" y1="4" x2="36" y2="52" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <line x1="42" y1="4" x2="42" y2="52" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <line x1="48" y1="6" x2="48" y2="50" stroke="#00C98D" stroke-width="0.8" stroke-opacity="0.5"/>
-      <path d="M28 50 L30 58 L42 58 L44 50" fill="#1F2435" stroke="#00C98D" stroke-width="2"/>
-      <rect x="30" y="57" width="12" height="14" rx="3" fill="#00C98D"/>
-      <line x1="30" y1="62" x2="42" y2="62" stroke="#0F1117" stroke-width="1.2" stroke-opacity="0.4"/>
-      <line x1="30" y1="66" x2="42" y2="66" stroke="#0F1117" stroke-width="1.2" stroke-opacity="0.4"/>
-      <circle cx="54" cy="52" r="7" fill="#FFB547" stroke="#0F1117" stroke-width="1"/>
-      <path d="M48 52 Q51 48 54 52 Q57 56 60 52" stroke="#0F1117" stroke-width="0.8" fill="none"/>
-    </svg>
+<div class="auth-screen" id="auth-screen">
+  <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px">
+
+    <!-- Club membership card -->
+    <div style="background:linear-gradient(135deg,#0a2018,#1a4030);border-radius:20px;padding:24px;position:relative;overflow:hidden">
+      <svg style="position:absolute;right:-12px;bottom:-12px;opacity:0.08" width="120" height="120" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="54" fill="none" stroke="#00C98D" stroke-width="2.5"/>
+        <circle cx="60" cy="60" r="36" fill="none" stroke="#00C98D" stroke-width="1.5"/>
+        <circle cx="60" cy="60" r="18" fill="none" stroke="#00C98D" stroke-width="1"/>
+        <line x1="6" y1="60" x2="114" y2="60" stroke="#00C98D" stroke-width="1"/>
+        <line x1="60" y1="6" x2="60" y2="114" stroke="#00C98D" stroke-width="1"/>
+      </svg>
+      <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;font-family:'Syne',sans-serif">Member Access</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div>
+          <div style="font-size:20px;font-weight:700;color:#fff;font-family:'Syne',sans-serif">GeDebug Padel</div>
+          <div style="font-size:10px;color:#00C98D;margin-top:2px">Member Buat Orang yang Doyan Main Gebug di Padel</div>
+        </div>
+      </div>
+      <div style="height:0.5px;background:rgba(255,255,255,0.08);margin-bottom:12px"></div>
+      <div style="display:flex;justify-content:flex-end;align-items:center">
+        <div style="display:flex;gap:5px">
+          <div style="width:32px;height:20px;background:rgba(255,255,255,0.08);border-radius:4px;border:0.5px solid rgba(255,255,255,0.1)"></div>
+          <div style="width:32px;height:20px;background:rgba(0,201,141,0.15);border-radius:4px;border:0.5px solid rgba(0,201,141,0.3)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sign in form -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div id="auth-err" class="auth-err"></div>
+      <button class="btn-google" onclick="signInGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Sign in with Google
+      </button>
+      <div class="auth-divider">
+        <div class="auth-divider-line"></div>
+        <span>or use email</span>
+        <div class="auth-divider-line"></div>
+      </div>
+      <input class="auth-input" type="email" id="auth-email" placeholder="Email address">
+      <input class="auth-input" type="password" id="auth-password" placeholder="Password">
+      <button class="btn-green" id="auth-submit-btn" onclick="signInEmail()">Sign in</button>
+      <div class="auth-toggle" id="auth-toggle-text">Don't have an account? <span onclick="toggleAuthMode()">Sign up</span></div>
+    </div>
+
+    <div style="text-align:center">
+      <button onclick="continueAsGuest()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline">Continue as guest (view only)</button>
+    </div>
+
   </div>
-  <div class="auth-logo">GeDebug Padel</div>
-  <div class="auth-sub">Indonesian Doyan Main Gebug Padel Community<br>Sign in to continue</div>
-  <div id="auth-err" class="auth-err"></div>
-  <button class="btn-google" onclick="signInGoogle()">
-    <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
-    Continue with Google
-  </button>
-  <div class="auth-divider"><div class="auth-divider-line"></div><span>or</span><div class="auth-divider-line"></div></div>
-  <div style="width:100%">
-    <input class="auth-input" type="email" id="auth-email" placeholder="Email address">
-    <input class="auth-input" type="password" id="auth-password" placeholder="Password">
-    <button class="btn-green" id="auth-submit-btn" onclick="signInEmail()">Sign in</button>
-    <div class="auth-toggle" id="auth-toggle-text">Don't have an account? <span onclick="toggleAuthMode()">Sign up</span></div>
-  </div>
-  <div style="margin-top:20px;font-size:11px;color:var(--text3);text-align:center">View-only access available without login</div>
-  <button onclick="continueAsGuest()" style="margin-top:8px;font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline">Continue as guest (view only)</button>
 </div>
 
 <!-- MAIN APP -->
