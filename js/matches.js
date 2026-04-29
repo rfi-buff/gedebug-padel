@@ -148,6 +148,13 @@ function renderSession(){
 
 function finishSession(){
   if(!State.currentUser){ showToast('Please sign in first'); return; }
+
+  // Only admin or the user who generated the session can save
+  if(!canSaveSession()){
+    showToast('Only the session generator or admin can save results');
+    return;
+  }
+
   if(!State.rounds.length){ showToast('No rounds to save'); return; }
   if(!confirm('Save results and update rankings?')) return;
 
@@ -222,6 +229,7 @@ function finishSession(){
   db.ref().update(updates);
   db.ref('session/rounds').set([]);
   db.ref('session/date').set('');
+  db.ref('session/generatedBy').remove();
   showToast('Results saved!');
   showScreen('rankings');
 }

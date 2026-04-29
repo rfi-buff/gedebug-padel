@@ -7,7 +7,7 @@
 ==============================================
 */
 
-// ── Firebase Config (PRODUCTION) ──
+// ── Firebase Config (DEV) ──
 const firebaseConfig = {
   apiKey: "AIzaSyBaH0pdJ2T7VQHkec0d0YlGbCDzAtb-Sbc",
   authDomain: "gedebug-padel.firebaseapp.com",
@@ -15,7 +15,7 @@ const firebaseConfig = {
   projectId: "gedebug-padel",
   storageBucket: "gedebug-padel.firebasestorage.app",
   messagingSenderId: "505481870409",
-  appId: "1:505481870409:web:b6b342140f0ad1b4045398"
+  appId: "1:505481870409:web:00345cd3c1a1082c8f4d5d"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -35,7 +35,8 @@ const State = {
   isGuest: false,
   currentUser: null,
   isLight: false,
-  isFirebaseInited: false
+  isFirebaseInited: false,
+  sessionGeneratedBy: null
 };
 
 // ── Palettes ──
@@ -91,6 +92,13 @@ function getRankPts(rank){
 }
 
 function pairKey(a, b){ return [a,b].sort().join('|'); }
+
+function canSaveSession(){
+  if(!State.currentUser) return false;
+  if(State.isAdmin) return true;
+  if(!State.sessionGeneratedBy) return false;
+  return State.sessionGeneratedBy === State.currentUser.email;
+}
 
 function toggleTheme(){
   State.isLight = !State.isLight;

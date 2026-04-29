@@ -58,6 +58,12 @@ function initFirebaseListeners(){
     renderPlayerRanks();
   });
 
+  db.ref('session/generatedBy').on('value', snap => {
+    State.sessionGeneratedBy = snap.val()||null;
+    renderSession();
+    applyRoleUI();
+  });
+
   db.ref('session/rounds').on('value', snap => {
     const data = snap.val();
     State.rounds = normalizeArray(data).map(round => {
@@ -76,9 +82,9 @@ function initFirebaseListeners(){
     renderRankings();
     const lb = document.getElementById('live-badge');
     if(lb) lb.style.display = State.rounds.length ? 'inline-block' : 'none';
-    // Show session actions for all logged-in users
+    // Show session actions only to generator or admin
     const sa = document.getElementById('session-actions');
-    if(sa) sa.style.display = (State.currentUser && State.rounds.length) ? 'flex' : 'none';
+    if(sa) sa.style.display = (State.rounds.length && canSaveSession()) ? 'flex' : 'none';
     applyRoleUI();
   });
 

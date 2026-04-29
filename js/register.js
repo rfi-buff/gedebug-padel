@@ -110,6 +110,7 @@ function generateSession(){
   }
   db.ref('session/rounds').set(newRounds);
   db.ref('session/date').set(dateStr);
+  db.ref('session/generatedBy').set(State.currentUser.email);
   showToast('Session generated!');
   showScreen('matches');
 }

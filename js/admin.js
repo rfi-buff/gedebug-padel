@@ -65,9 +65,9 @@ function applyRoleUI(){
   const adminNav = document.getElementById('nav-admin');
   if(adminNav) adminNav.style.display = State.isAdmin ? 'flex' : 'none';
 
-  // Session actions — all logged-in users
+  // Session actions — only generator or admin can save
   const sa = document.getElementById('session-actions');
-  if(sa) sa.style.display = (State.currentUser && State.rounds.length) ? 'flex' : 'none';
+  if(sa) sa.style.display = (State.rounds.length && canSaveSession()) ? 'flex' : 'none';
 
   // Logout button
   const logoutBtn = document.getElementById('logout-btn');
