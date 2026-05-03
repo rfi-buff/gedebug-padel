@@ -1,7 +1,7 @@
 /*
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.0.0
+  Version : v2.1.0
   File    : js/firebase.js
   Module  : Firebase config, init & shared state
 ==============================================
@@ -36,7 +36,9 @@ const State = {
   currentUser: null,
   isLight: false,
   isFirebaseInited: false,
-  sessionGeneratedBy: null
+  sessionGeneratedBy: null,
+  matchFormat: 1,  // 1 = Game of 4, 2 = Best of 5
+  weeklyRanking: []
 };
 
 // ── Palettes ──

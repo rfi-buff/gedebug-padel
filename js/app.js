@@ -1,7 +1,7 @@
 /*
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.0.0
+  Version : v2.1.0
   File    : js/app.js
   Module  : App - Firebase listeners & navigation
 ==============================================
@@ -56,6 +56,16 @@ function initFirebaseListeners(){
     renderPills();
     renderRankings();
     renderPlayerRanks();
+  });
+
+  db.ref('session/weeklyRanking').on('value', snap => {
+    State.weeklyRanking = normalizeArray(snap.val());
+    renderRankings();
+  });
+
+  db.ref('session/matchFormat').on('value', snap => {
+    State.matchFormat = snap.val()||1;
+    renderSession();
   });
 
   db.ref('session/generatedBy').on('value', snap => {

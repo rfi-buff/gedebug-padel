@@ -2,7 +2,7 @@
 <!--
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.0.0
+  Version : v2.1.0
   Date    : 2026-04-24
   Modules :
     css/style.css    - All styles
@@ -119,6 +119,20 @@
         <button class="btn-outline" onclick="addPlayer()" style="white-space:nowrap;padding:12px 14px">+ Add</button>
       </div>
       <div style="height:16px"></div>
+
+      <!-- Match Format Selector -->
+      <div class="section-label" style="margin-top:0;margin-bottom:10px">Match Format</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <div id="fmt-1" onclick="selectFormat(1)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:0.5px solid var(--green);background:var(--green-dim);cursor:pointer;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--green)">Game of 4</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:3px">4-0 · 3-1 · 2-2</div>
+        </div>
+        <div id="fmt-2" onclick="selectFormat(2)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg3);cursor:pointer;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text2)">Game of 5</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">5-0 · 4-1 · 3-2</div>
+        </div>
+      </div>
+
       <button class="btn-green" onclick="generateSession()">Generate this week's matches</button>
     </div>
     <div id="reg-err" style="font-size:12px;color:var(--red);margin-top:10px;text-align:center"></div>
@@ -193,6 +207,7 @@
       <div id="pr-counter" style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text3)">1 / 1</div>
     </div>
   </div>
+</div>
 </div>
 
 <!-- ADMIN -->

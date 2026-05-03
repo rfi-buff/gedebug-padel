@@ -1,7 +1,7 @@
 /*
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.0.0
+  Version : v2.1.0
   File    : js/matches.js
   Module  : Matches - court scoring & finalization
 ==============================================
@@ -31,9 +31,11 @@ function changeScore(ri, ci, team, delta){
   const court = State.rounds[ri].courts[ci];
   if(court.locked){ showToast('Match is finalized 🔒'); return; }
   if((court.status||'waiting') !== 'playing'){ showToast('Start the match first ▶️'); return; }
+  const maxScore = State.matchFormat === 2 ? 5 : 4;
   let nA = court.scoreA, nB = court.scoreB;
-  if(team==='A'){ nA = Math.max(0,Math.min(4,court.scoreA+delta)); if(nA===court.scoreA) return; nB = 4-nA; }
-  else { nB = Math.max(0,Math.min(4,court.scoreB+delta)); if(nB===court.scoreB) return; nA = 4-nB; }
+  // Both formats: scores sum to max, +/- auto-adjusts other side
+  if(team==='A'){ nA = Math.max(0,Math.min(maxScore,court.scoreA+delta)); if(nA===court.scoreA) return; nB = maxScore-nA; }
+  else { nB = Math.max(0,Math.min(maxScore,court.scoreB+delta)); if(nB===court.scoreB) return; nA = maxScore-nB; }
   db.ref(`session/rounds/${ri}/courts/${ci}`).update({scoreA:nA, scoreB:nB});
 }
 
@@ -105,9 +107,15 @@ function courtHTML(ri, ci, court){
     }
   }
 
+  const formatLabel = State.matchFormat === 2
+    ? '<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(255,181,71,0.12);color:var(--amber);margin-left:6px">Game of 5</span>'
+    : '<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(0,201,141,0.1);color:var(--green);margin-left:6px">Game of 4</span>';
+
   return `<div class="court-card" style="${opacity}${border}">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div class="court-label" style="margin-bottom:0">Court ${ci+1}</div>${statusLabel}
+      <div style="display:flex;align-items:center">
+        <div class="court-label" style="margin-bottom:0">Court ${ci+1}</div>${formatLabel}
+      </div>${statusLabel}
     </div>
     <div class="match-row">
       <div class="team-block">
@@ -230,6 +238,8 @@ function finishSession(){
   db.ref('session/rounds').set([]);
   db.ref('session/date').set('');
   db.ref('session/generatedBy').remove();
+  db.ref('session/matchFormat').remove();
+  db.ref('session/weeklyRanking').set(sessionRanking);
   showToast('Results saved!');
   showScreen('rankings');
 }

@@ -1,7 +1,7 @@
 /*
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.0.0
+  Version : v2.1.0
   File    : js/rankings.js
   Module  : Rankings - live stats & season totals
 ==============================================
@@ -79,6 +79,41 @@ function renderRankings(){
       h += `<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3)">Start matches to see live rankings</div>`;
     }
     h += `</div>`;
+
+  } else if(State.weeklyRanking && State.weeklyRanking.length > 0){
+    // Show last saved weekly ranking
+    h += `<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px">
+      <div style="padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:11px;color:var(--text2)">Last session result</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,201,141,0.1);color:var(--green)">Completed</span>
+      </div>
+      <div style="display:grid;grid-template-columns:24px 1fr 30px 30px 30px 30px 36px;gap:2px;padding:6px 12px;border-bottom:0.5px solid var(--border)">
+        <span></span>
+        <span style="font-size:9px;color:var(--text3)">Player</span>
+        <span style="font-size:9px;color:var(--text3);text-align:center">Sc</span>
+        <span style="font-size:9px;color:var(--green);text-align:center">W</span>
+        <span style="font-size:9px;color:var(--red);text-align:center">L</span>
+        <span style="font-size:9px;color:var(--amber);text-align:center">D</span>
+        <span style="font-size:9px;color:var(--text3);text-align:center">Pts</span>
+      </div>`;
+    State.weeklyRanking.forEach((p,i) => {
+      const pl = State.players.find(x => x.name===p.name);
+      const c = PALETTES[(pl?.color||p.color||0)%PALETTES.length];
+      h += `<div style="display:grid;grid-template-columns:24px 1fr 30px 30px 30px 30px 36px;gap:2px;padding:9px 12px;border-bottom:0.5px solid var(--border);align-items:center">
+        <span style="font-size:13px">${medals[i]||`<span style="font-size:11px;color:var(--text3)">${i+1}</span>`}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:22px;height:22px;border-radius:50%;background:${c.bg};color:${c.txt};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">${ini(p.name)}</div>
+          <span style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px">${p.name}</span>
+        </div>
+        <span style="font-size:12px;color:var(--text2);text-align:center">${p.score||0}</span>
+        <span style="font-size:12px;color:var(--green);font-weight:500;text-align:center">${p.won||0}</span>
+        <span style="font-size:12px;color:var(--red);font-weight:500;text-align:center">${p.lost||0}</span>
+        <span style="font-size:12px;color:var(--amber);font-weight:500;text-align:center">${p.draw||0}</span>
+        <span style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--green);text-align:center">${p.rankPts||0}</span>
+      </div>`;
+    });
+    h += `</div>`;
+
   } else {
     h += `<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:20px">
       <div style="font-size:28px;margin-bottom:8px">📋</div>
@@ -92,7 +127,6 @@ function renderRankings(){
     All Sessions Ranking
   </div>`;
 
-  // Calculate all-session totals from history
   const allStats = {};
   State.sessionHistory.forEach(sess => {
     if(!sess.ranking) return;
@@ -102,12 +136,11 @@ function renderRankings(){
       allStats[r.name].sessions += 1;
     });
   });
-
   const allRanked = Object.values(allStats).sort((a,b) => b.totalPts-a.totalPts);
 
   if(allRanked.length){
     h += `<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px">
-      <div style="padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="padding:10px 14px;border-bottom:0.5px solid var(--border)">
         <span style="font-size:11px;color:var(--text2)">1st=10pts · 2nd=8pts · 3rd=6pts · 4th-10th=5pts</span>
       </div>
       <div style="display:grid;grid-template-columns:24px 1fr 50px 46px;gap:2px;padding:6px 12px;border-bottom:0.5px solid var(--border)">
@@ -136,7 +169,6 @@ function renderRankings(){
     </div>`;
   }
 
-  // Admin reset button
   body.innerHTML = h;
   const rb = document.getElementById('admin-reset-btn');
   if(rb) rb.style.display = State.isAdmin ? 'block' : 'none';

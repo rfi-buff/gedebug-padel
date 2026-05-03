@@ -1,7 +1,7 @@
 /*
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.0.0
+  Version : v2.1.0
   File    : js/players.js
   Module  : Players - swipe cards, stats, photo upload
 ==============================================
@@ -25,6 +25,147 @@ function renderPlayerRanks(){
   renderPrCard();
   renderPrDots();
   initPrSwipe();
+
+  // Show nav arrows
+  const prev = document.getElementById('pr-prev');
+  const next = document.getElementById('pr-next');
+  if(prev) prev.style.display = 'flex';
+  if(next) next.style.display = 'flex';
+}
+
+function showPlayerCard(index){
+  prIndex = index;
+  // Show player card modal
+  const p = prPlayers[index];
+  if(!p) return;
+  const c = PALETTES[p.color%PALETTES.length];
+  const extra = State.playerExtras[p.name]||{};
+
+  // Calculate stats from history
+  let histGP=0, histWon=0, histLost=0, histDraw=0;
+  State.sessionHistory.forEach(sess => {
+    if(!sess.ranking) return;
+    sess.ranking.forEach(r => {
+      if(r.name===p.name){ histGP+=(r.played||0); histWon+=(r.won||0); histLost+=(r.lost||0); histDraw+=(r.draw||0); }
+    });
+  });
+
+  const weeklyTitles = State.sessionHistory.reduce((count,sess) => {
+    if(!sess.ranking?.length) return count;
+    return count + (sess.ranking[0]?.name===p.name ? 1 : 0);
+  }, 0);
+
+  // Best partner
+  const pairStats = {};
+  State.sessionHistory.forEach(sess => {
+    if(!sess.rounds) return;
+    sess.rounds.forEach(round => {
+      normalizeArray(round.courts).forEach(court => {
+        const sA=court.scoreA||0, sB=court.scoreB||0;
+        if(sA+sB===0) return;
+        const tA = normalizeArray(court.teamA).map(x => x?.name||x).filter(x=>x&&typeof x==='string');
+        const tB = normalizeArray(court.teamB).map(x => x?.name||x).filter(x=>x&&typeof x==='string');
+        const recordPair = (team,won) => {
+          if(team.length<2) return;
+          const k = pairKey(team[0],team[1]);
+          if(!pairStats[k]) pairStats[k]={games:0,wins:0};
+          pairStats[k].games++; if(won) pairStats[k].wins++;
+        };
+        recordPair(tA,sA>sB); recordPair(tB,sB>sA);
+      });
+    });
+  });
+
+  let bestPct=0, bestPartners=[];
+  Object.keys(pairStats).forEach(key => {
+    const names = key.split('|');
+    if(!names.includes(p.name)) return;
+    const s = pairStats[key];
+    if(s.games<2) return;
+    const partnerName = names[0]===p.name ? names[1] : names[0];
+    if(!partnerName||partnerName==='undefined') return;
+    const pct = Math.round(s.wins/s.games*100);
+    if(pct>bestPct){ bestPct=pct; bestPartners=[{name:partnerName,pct}]; }
+    else if(pct===bestPct) bestPartners.push({name:partnerName,pct});
+  });
+
+  const modal = document.getElementById('player-card-modal');
+  const content = document.getElementById('player-card-content');
+  if(!modal||!content) return;
+
+  const photoHTML = extra.photoURL
+    ? `<img src="${extra.photoURL}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2.5px solid var(--green);flex-shrink:0">`
+    : `<div style="width:60px;height:60px;border-radius:50%;background:${c.bg};color:${c.txt};display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:20px;font-weight:800;border:2.5px solid var(--green);flex-shrink:0">${ini(p.name)}</div>`;
+
+  const rank = prPlayers.findIndex(x => x.name===p.name);
+  const medals = ['🥇','🥈','🥉'];
+
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div style="position:relative;flex-shrink:0">
+        ${photoHTML}
+        ${State.currentUser?`<label for="photo-modal-upload" style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px">📷</label>
+        <input type="file" id="photo-modal-upload" accept="image/*" style="display:none" onchange="uploadPlayerPhoto('${p.name}',this)">`:'' }
+      </div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text)">${medals[rank]||'#'+(rank+1)} ${p.name}</div>
+        <div style="font-size:12px;color:var(--green);margin-top:2px">${p.totalPts||0} total points</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:var(--bg3);border-radius:12px;padding:12px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--green)">${p.totalPts||0}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">Total Pts</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:12px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--amber)">${weeklyTitles}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">Titles</div>
+      </div>
+    </div>
+    <div style="display:flex;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px">
+      <div style="flex:1;padding:10px;border-right:0.5px solid var(--border);text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--green)">${histWon}</div>
+        <div style="font-size:10px;color:var(--text3)">Won</div>
+      </div>
+      <div style="flex:1;padding:10px;border-right:0.5px solid var(--border);text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--red)">${histLost}</div>
+        <div style="font-size:10px;color:var(--text3)">Lost</div>
+      </div>
+      <div style="flex:1;padding:10px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--amber)">${histDraw}</div>
+        <div style="font-size:10px;color:var(--text3)">Draw</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:32px;margin-bottom:12px">
+      <div style="text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text)">${histGP}</div>
+        <div style="font-size:10px;color:var(--text3)">Games Played</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--green)">${histGP?Math.round(histWon/histGP*100):0}%</div>
+        <div style="font-size:10px;color:var(--text3)">Win %</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:12px;padding:10px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">🎾</span><span style="font-size:12px;color:var(--text2)">Side Preference</span></div>
+      ${State.isAdmin
+        ? `<select onchange="saveSidePref('${p.name}',this.value)" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:5px 10px;color:var(--text);font-size:13px;cursor:pointer;outline:none">
+            <option value="" ${!extra.sidePref?'selected':''}>Not set</option>
+            <option value="Right" ${extra.sidePref==='Right'?'selected':''}>Right</option>
+            <option value="Left" ${extra.sidePref==='Left'?'selected':''}>Left</option>
+            <option value="Mix" ${extra.sidePref==='Mix'?'selected':''}>Mix</option>
+          </select>`
+        : `<span style="font-size:13px;font-weight:600;color:var(--text)">${extra.sidePref||'Not set'}</span>`}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:12px;padding:10px 14px">
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">🤝</span><span style="font-size:12px;color:var(--text2)">Best Partner</span></div>
+      ${bestPartners.length>0
+        ? `<span style="font-size:13px;font-weight:600;color:var(--green)">${bestPartners.map(b=>b.name).join(' | ')} <span style="font-size:11px;color:var(--text3)">${bestPct}%</span></span>`
+        : '<span style="font-size:12px;color:var(--text3)">No data yet</span>'}
+    </div>`;
+
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
 }
 
 function renderPrCard(){

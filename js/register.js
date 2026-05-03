@@ -1,11 +1,32 @@
 /*
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.0.0
+  Version : v2.1.0
   File    : js/register.js
   Module  : Register - player management & session generation
 ==============================================
 */
+
+function selectFormat(fmt){
+  State.matchFormat = fmt;
+  const f1 = document.getElementById('fmt-1');
+  const f2 = document.getElementById('fmt-2');
+  if(fmt === 1){
+    f1.style.border = '0.5px solid var(--green)';
+    f1.style.background = 'var(--green-dim)';
+    f1.querySelector('div').style.color = 'var(--green)';
+    f2.style.border = '0.5px solid var(--border2)';
+    f2.style.background = 'var(--bg3)';
+    f2.querySelector('div').style.color = 'var(--text2)';
+  } else {
+    f2.style.border = '0.5px solid var(--green)';
+    f2.style.background = 'var(--green-dim)';
+    f2.querySelector('div').style.color = 'var(--green)';
+    f1.style.border = '0.5px solid var(--border2)';
+    f1.style.background = 'var(--bg3)';
+    f1.querySelector('div').style.color = 'var(--text2)';
+  }
+}
 
 function renderPills(){
   const sel = State.players.filter(p => p.active).length;
@@ -111,6 +132,8 @@ function generateSession(){
   db.ref('session/rounds').set(newRounds);
   db.ref('session/date').set(dateStr);
   db.ref('session/generatedBy').set(State.currentUser.email);
+  db.ref('session/matchFormat').set(State.matchFormat);
+  db.ref('session/weeklyRanking').remove();
   showToast('Session generated!');
   showScreen('matches');
 }
