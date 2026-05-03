@@ -130,9 +130,11 @@ function renderRankings(){
   const allStats = {};
   State.sessionHistory.forEach(sess => {
     if(!sess.ranking) return;
-    sess.ranking.forEach(r => {
+    sess.ranking.forEach((r,i) => {
       if(!allStats[r.name]) allStats[r.name] = {name:r.name, color:r.color||0, totalPts:0, sessions:0};
-      allStats[r.name].totalPts += (r.rankPts||0);
+      // Use rankPts if available, otherwise recalculate from position
+      const pts = (r.rankPts && r.rankPts > 0) ? r.rankPts : getRankPts(i);
+      allStats[r.name].totalPts += pts;
       allStats[r.name].sessions += 1;
     });
   });

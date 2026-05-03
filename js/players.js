@@ -10,10 +10,37 @@
 let prPlayers = [];
 let prIndex = 0;
 
+function getPlayerHistoryStats(name){
+  let totalPts=0, sessions=0, GP=0, won=0, lost=0, draw=0, titles=0;
+  State.sessionHistory.forEach(sess => {
+    if(!sess.ranking) return;
+    sess.ranking.forEach((r,i) => {
+      if(r.name===name){
+        // Use rankPts if available, otherwise recalculate from position
+        const pts = (r.rankPts && r.rankPts > 0) ? r.rankPts : getRankPts(i);
+        totalPts += pts;
+        sessions++;
+        GP += (r.played||0);
+        won += (r.won||0);
+        lost += (r.lost||0);
+        draw += (r.draw||0);
+        if(i===0) titles++;
+      }
+    });
+  });
+  return {totalPts, sessions, GP, won, lost, draw, titles};
+}
+
 function renderPlayerRanks(){
   const wrap = document.getElementById('pr-swipe-wrap');
   if(!wrap) return;
-  const allPlayers = State.players.slice().sort((a,b) => (b.totalPts||0)-(a.totalPts||0));
+
+  // Sort players by history-calculated totalPts (matches All Sessions Ranking)
+  const allPlayers = State.players.slice().sort((a,b) => {
+    const statsA = getPlayerHistoryStats(a.name);
+    const statsB = getPlayerHistoryStats(b.name);
+    return statsB.totalPts - statsA.totalPts;
+  });
   prPlayers = allPlayers;
   if(!prPlayers.length){
     wrap.innerHTML = '<div class="empty" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="empty-icon">🏅</div><div class="empty-title">No players yet</div><div class="empty-sub">Add players to see their cards</div></div>';
@@ -175,23 +202,17 @@ function renderPrCard(){
   const c = PALETTES[p.color%PALETTES.length];
   const extra = State.playerExtras[p.name]||{};
   const rank = prIndex;
-  const rankLabel = rank >= 0 ? `#${rank+1}` : '-';
   const rankMedal = rank===0?'🥇':rank===1?'🥈':rank===2?'🥉':'';
 
-  // Cumulative stats from history
-  let histGP=0, histWon=0, histLost=0, histDraw=0;
-  State.sessionHistory.forEach(sess => {
-    if(!sess.ranking) return;
-    sess.ranking.forEach(r => {
-      if(r.name===p.name){ histGP+=(r.played||0); histWon+=(r.won||0); histLost+=(r.lost||0); histDraw+=(r.draw||0); }
-    });
-  });
-
-  // Titles from history
-  const weeklyTitles = State.sessionHistory.reduce((count,sess) => {
-    if(!sess.ranking?.length) return count;
-    return count + (sess.ranking[0]?.name===p.name ? 1 : 0);
-  }, 0);
+  // All stats from history (matches All Sessions Ranking)
+  const stats = getPlayerHistoryStats(p.name);
+  const histGP = stats.GP;
+  const histWon = stats.won;
+  const histLost = stats.lost;
+  const histDraw = stats.draw;
+  const histTotalPts = stats.totalPts;
+  const histSessions = stats.sessions;
+  const weeklyTitles = stats.titles;
 
   // Best partner
   const pairStats = {};
@@ -243,12 +264,12 @@ function renderPrCard(){
         </div>
         <div style="flex:1;min-width:0">
           <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${rankMedal?rankMedal+' ':''}${p.name}</div>
-          ${p.totalPts>0?`<div style="font-size:12px;font-weight:600;color:var(--green);margin-top:2px">Rank ${rankLabel}</div>`:`<div style="font-size:12px;color:var(--text3);margin-top:2px">Not yet ranked</div>`}
+          ${histTotalPts>0?`<div style="font-size:12px;font-weight:600;color:var(--green);margin-top:2px">Rank #${rank+1} · ${histSessions} session${histSessions!==1?'s':''}</div>`:`<div style="font-size:12px;color:var(--text3);margin-top:2px">No sessions yet</div>`}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
         <div style="background:var(--bg3);border-radius:12px;padding:12px 8px;text-align:center">
-          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--green)">${p.totalPts||0}</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--green)">${histTotalPts}</div>
           <div style="font-size:10px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:0.05em">Total Pts</div>
         </div>
         <div style="background:var(--bg3);border-radius:12px;padding:12px 8px;text-align:center">
