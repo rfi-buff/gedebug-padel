@@ -117,7 +117,7 @@ function generateSession(){
   const sitOutPerRound = Math.max(0, active.length - 8);
   const newRounds = [];
   const sitCount = {};
-  const partnerCount = {}, opponentCount = {};
+  const partnerCount = {}, lastPartnerRound = {}, opponentCount = {};
   active.forEach(p => sitCount[p.name] = 0);
   for(let r = 0; r < 10; r++){
     let sitters = [];
@@ -127,7 +127,7 @@ function generateSession(){
       sitters.forEach(p => sitCount[p.name]++);
     }
     const pool = active.filter(p => !sitters.some(s => s.name === p.name));
-    newRounds.push(buildSmartRound(pool, sitters, false, partnerCount, opponentCount));
+    newRounds.push(buildSmartRound(pool, sitters, false, partnerCount, lastPartnerRound, opponentCount, r));
   }
   db.ref('session/rounds').set(newRounds);
   db.ref('session/date').set(dateStr);
@@ -147,17 +147,32 @@ function shuffle(arr){
   return a;
 }
 
-function buildSmartRound(pool, sitters, isExtra, partnerCount, opponentCount){
+function buildSmartRound(pool, sitters, isExtra, partnerCount, lastPartnerRound, opponentCount, roundIndex){
+  const ri = roundIndex || 0;
   let best = null, bestScore = Infinity;
-  for(let t = 0; t < 60; t++){
+
+  for(let t = 0; t < 1000; t++){
     const sh = shuffle(pool);
     let score = 0;
     const courts = [];
     for(let c = 0; c < 2 && sh.length >= 4; c++){
       const [a,b,x,y] = [sh.shift(), sh.shift(), sh.shift(), sh.shift()];
-      score += (partnerCount[pairKey(a.name,b.name)]||0)*10;
-      score += (partnerCount[pairKey(x.name,y.name)]||0)*10;
-      [[a,x],[a,y],[b,x],[b,y]].forEach(([p,q]) => score += (opponentCount[pairKey(p.name,q.name)]||0)*3);
+      // Partner scoring with heavy recency penalty
+      [[a.name,b.name],[x.name,y.name]].forEach(([p1,p2]) => {
+        const k = pairKey(p1,p2);
+        const times = partnerCount[k]||0;
+        const last = lastPartnerRound[k] !== undefined ? lastPartnerRound[k] : -99;
+        const recency = ri - last;
+        if(times === 0) score += 0;
+        else if(recency <= 1) score += 50000;
+        else if(recency <= 2) score += 5000;
+        else if(recency <= 4) score += 500;
+        else score += times * 50;
+      });
+      // Opponent scoring
+      [[a.name,x.name],[a.name,y.name],[b.name,x.name],[b.name,y.name]].forEach(([p1,p2]) => {
+        score += (opponentCount[pairKey(p1,p2)]||0) * 3;
+      });
       courts.push({
         teamA:[{name:a.name,color:a.color},{name:b.name,color:b.color}],
         teamB:[{name:x.name,color:x.color},{name:y.name,color:y.color}],
@@ -167,12 +182,19 @@ function buildSmartRound(pool, sitters, isExtra, partnerCount, opponentCount){
     if(score < bestScore){ bestScore = score; best = courts; }
     if(bestScore === 0) break;
   }
+
   if(best){
     best.forEach(court => {
-      const a=court.teamA[0].name, b=court.teamA[1].name, x=court.teamB[0].name, y=court.teamB[1].name;
-      partnerCount[pairKey(a,b)] = (partnerCount[pairKey(a,b)]||0)+1;
-      partnerCount[pairKey(x,y)] = (partnerCount[pairKey(x,y)]||0)+1;
-      [a,b].forEach(p => [x,y].forEach(q => opponentCount[pairKey(p,q)] = (opponentCount[pairKey(p,q)]||0)+1));
+      const a=court.teamA[0].name, b=court.teamA[1].name;
+      const x=court.teamB[0].name, y=court.teamB[1].name;
+      [[a,b],[x,y]].forEach(([p1,p2]) => {
+        const k = pairKey(p1,p2);
+        partnerCount[k] = (partnerCount[k]||0)+1;
+        lastPartnerRound[k] = ri;
+      });
+      [a,b].forEach(p => [x,y].forEach(q => {
+        opponentCount[pairKey(p,q)] = (opponentCount[pairKey(p,q)]||0)+1;
+      }));
     });
   }
   return { courts: best||[], sitting: sitters.map(s => s.name), isExtra: isExtra||false };
@@ -191,17 +213,23 @@ function addRound(){
     const sorted = active.slice().sort((a,b) => sitCount[a.name] - sitCount[b.name]);
     sitters = sorted.slice(0, sitOutPerRound);
   }
-  const partnerCount = {}, opponentCount = {};
-  State.rounds.forEach(round => {
+  const partnerCount = {}, lastPartnerRound = {}, opponentCount = {};
+  State.rounds.forEach((round, ri) => {
     round.courts.forEach(court => {
-      const a=court.teamA[0].name, b=court.teamA[1].name, x=court.teamB[0].name, y=court.teamB[1].name;
-      partnerCount[pairKey(a,b)] = (partnerCount[pairKey(a,b)]||0)+1;
-      partnerCount[pairKey(x,y)] = (partnerCount[pairKey(x,y)]||0)+1;
-      [a,b].forEach(p => [x,y].forEach(q => opponentCount[pairKey(p,q)] = (opponentCount[pairKey(p,q)]||0)+1));
+      const a=court.teamA[0].name, b=court.teamA[1].name;
+      const x=court.teamB[0].name, y=court.teamB[1].name;
+      [[a,b],[x,y]].forEach(([p1,p2]) => {
+        const k = pairKey(p1,p2);
+        partnerCount[k] = (partnerCount[k]||0)+1;
+        lastPartnerRound[k] = ri;
+      });
+      [a,b].forEach(p => [x,y].forEach(q => {
+        opponentCount[pairKey(p,q)] = (opponentCount[pairKey(p,q)]||0)+1;
+      }));
     });
   });
   const pool = active.filter(p => !sitters.some(s => s.name === p.name));
-  const updated = [...State.rounds, buildSmartRound(pool, sitters, true, partnerCount, opponentCount)];
+  const updated = [...State.rounds, buildSmartRound(pool, sitters, true, partnerCount, lastPartnerRound, opponentCount, State.rounds.length)];
   db.ref('session/rounds').set(updated);
   showToast('Extra round added!');
   setTimeout(() => { const s = document.getElementById('session-scroll'); if(s) s.scrollTop = s.scrollHeight; }, 400);
