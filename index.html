@@ -2,7 +2,7 @@
 <!--
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.1.0
+  Version : v2.0.0-dev
   Date    : 2026-04-24
   Modules :
     css/style.css    - All styles
@@ -34,7 +34,7 @@
   <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px">
 
     <!-- Club membership card -->
-    <div style="background:linear-gradient(135deg,#0a2018,#1a4030);border-radius:20px;padding:24px;position:relative;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#064E3B,#065F46);border-radius:20px;padding:24px;position:relative;overflow:hidden">
       <svg style="position:absolute;right:-12px;bottom:-12px;opacity:0.08" width="120" height="120" viewBox="0 0 120 120">
         <circle cx="60" cy="60" r="54" fill="none" stroke="#00C98D" stroke-width="2.5"/>
         <circle cx="60" cy="60" r="36" fill="none" stroke="#00C98D" stroke-width="1.5"/>
@@ -84,7 +84,7 @@
 </div>
 
 <!-- MAIN APP -->
-<div id="main-app" style="display:none;flex:1;flex-direction:column;height:100%;position:relative">
+<div id="main-app" style="display:none;flex:1;flex-direction:column;height:100%;position:relative;margin-top:22px">
 
 <!-- REGISTER -->
 <div class="screen active" id="sc-register">
@@ -95,7 +95,7 @@
         <div class="sync-dot off" id="sync-dot"></div>
         <div id="user-badge"></div>
         <button id="logout-btn" onclick="signOut()" style="display:none;width:34px;height:34px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg3);cursor:pointer;align-items:center;justify-content:center;font-size:15px" title="Sign out">🚪</button>
-        <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+        <button class="theme-btn" onclick="toggleTheme()">☀️</button>
       </div>
     </div>
   </div>
@@ -144,7 +144,7 @@
   <div class="topbar">
     <div class="topbar-row">
       <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub" id="session-meta">Matches</div></div>
-      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+      <button class="theme-btn" onclick="toggleTheme()">☀️</button>
     </div>
   </div>
   <div class="scroll-body" id="session-scroll">
@@ -166,7 +166,7 @@
   <div class="topbar">
     <div class="topbar-row">
       <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub">This Week · All Sessions</div></div>
-      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+      <button class="theme-btn" onclick="toggleTheme()">☀️</button>
     </div>
   </div>
   <div class="scroll-body">
@@ -182,7 +182,7 @@
   <div class="topbar">
     <div class="topbar-row">
       <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub" id="history-meta">History</div></div>
-      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+      <button class="theme-btn" onclick="toggleTheme()">☀️</button>
     </div>
   </div>
   <div class="scroll-body" id="history-body"></div>
@@ -193,7 +193,7 @@
   <div class="topbar">
     <div class="topbar-row">
       <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub" id="playerranks-sub">Player Ranks</div></div>
-      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+      <button class="theme-btn" onclick="toggleTheme()">☀️</button>
     </div>
   </div>
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;padding-bottom:80px">
@@ -209,12 +209,13 @@
   </div>
 </div>
 </div>
+
 <!-- ADMIN -->
 <div class="screen" id="sc-admin">
   <div class="topbar">
     <div class="topbar-row">
       <div><div class="topbar-title">GeDebug Padel</div><div class="topbar-sub">Admin panel</div></div>
-      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+      <button class="theme-btn" onclick="toggleTheme()">☀️</button>
     </div>
   </div>
   <div class="scroll-body">

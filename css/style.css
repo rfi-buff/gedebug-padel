@@ -1,23 +1,26 @@
 /*
 ==============================================
-  GeDebug Padel App
-  Version : v2.0.0-dev
+  GeDebug Padel App - DEV VERSION
+  Version : v2.1.0-dev
   File    : css/style.css
+  Theme   : Clean white + green
 ==============================================
 */
 
 :root{
+  --green:#00B464;--green-dim:rgba(0,180,100,0.1);
+  --red:#EF4444;--amber:#F59E0B;
+  --bg:#F5F7F5;--bg2:#FFFFFF;--bg3:#EEF0EE;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
+  --text:#111827;--text2:#4B5563;--text3:#9CA3AF;
+  --radius:16px;--radius-sm:10px
+}
+body.dark{
   --green:#00C98D;--green-dim:rgba(0,201,141,0.12);
   --red:#FF5B5B;--amber:#FFB547;
   --bg:#0F1117;--bg2:#181C26;--bg3:#1F2435;
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
   --text:#F0F2F7;--text2:#8B90A0;--text3:#555A6B;
-  --radius:16px;--radius-sm:10px
-}
-body.light{
-  --bg:#F5F6FA;--bg2:#FFFFFF;--bg3:#EDEEF2;
-  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
-  --text:#111318;--text2:#5A5F70;--text3:#9EA3B0
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;transition:background-color 0.2s,border-color 0.2s,color 0.2s}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow:hidden}
@@ -26,7 +29,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:r
 /* Screens */
 .screen{display:none;flex-direction:column;height:100%;overflow:hidden}
 .screen.active{display:flex}
-.topbar{padding:52px 20px 14px;flex-shrink:0}
+.topbar{padding:52px 20px 14px;flex-shrink:0;background:var(--bg);border-bottom:0.5px solid var(--border)}
 .topbar-row{display:flex;align-items:center;justify-content:space-between}
 .topbar-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text)}
 .topbar-sub{font-size:12px;color:var(--text2);margin-top:2px}
@@ -35,7 +38,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:r
 .scroll-body::-webkit-scrollbar{display:none}
 
 /* Bottom Nav */
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--bg2);border-top:0.5px solid var(--border2);display:flex;justify-content:space-around;padding:8px 0 24px;z-index:100}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--bg2);border-top:0.5px solid var(--border2);display:flex;justify-content:space-around;padding:8px 0 24px;z-index:100;box-shadow:0 -2px 12px rgba(0,0,0,0.06)}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0;min-width:0}
 .nav-icon{width:22px;height:22px}
 .nav-label{font-size:9px;color:var(--text3);text-align:center;white-space:nowrap}

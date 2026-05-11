@@ -104,7 +104,7 @@ function canSaveSession(){
 
 function toggleTheme(){
   State.isLight = !State.isLight;
-  document.body.classList.toggle('light', State.isLight);
+  document.body.classList.toggle('dark', !State.isLight);
   const icon = State.isLight ? '☀️' : '🌙';
   document.querySelectorAll('.theme-btn').forEach(b => b.textContent = icon);
 }
