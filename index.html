@@ -2,7 +2,7 @@
 <!--
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.0.0-dev
+  Version : v2.1.0
   Date    : 2026-04-24
   Modules :
     css/style.css    - All styles
@@ -76,10 +76,6 @@
       <div class="auth-toggle" id="auth-toggle-text">Don't have an account? <span onclick="toggleAuthMode()">Sign up</span></div>
     </div>
 
-    <div style="text-align:center">
-      <button onclick="continueAsGuest()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline">Continue as guest (view only)</button>
-    </div>
-
   </div>
 </div>
 
@@ -100,10 +96,6 @@
     </div>
   </div>
   <div class="scroll-body">
-    <div id="view-only-bar" class="view-only-bar" style="display:none">
-      <span>👁 View only — sign in to participate</span>
-      <button onclick="showAuth()" style="font-size:12px;color:var(--green);background:none;border:none;cursor:pointer;font-weight:600">Sign in</button>
-    </div>
     <div id="selected-bar" class="selected-bar" style="display:none">
       <span id="sel-count-label">0 players selected</span>
       <span style="font-size:12px;color:var(--text2)">tap to deselect</span>
