@@ -248,5 +248,90 @@ function finishSession(){
   db.ref('session/numCourts').remove();
   db.ref('session/weeklyRanking').set(sessionRanking);
   showToast('Results saved!');
+  showPodium(sessionRanking);
   showScreen('rankings');
+}
+
+function closePodium(){
+  const modal = document.getElementById('podium-modal');
+  if(modal){ modal.style.display = 'none'; document.body.style.overflow = ''; }
+}
+
+function showPodium(ranking){
+  if(!ranking||ranking.length<1) return;
+  const top3 = ranking.slice(0,3);
+  const r1 = top3[0]||null;
+  const r2 = top3[1]||null;
+  const r3 = top3[2]||null;
+
+  const goldTrophy = `<svg viewBox="0 0 70 80" width="64" height="74">
+    <rect x="20" y="70" width="30" height="6" rx="2" fill="#EF9F27"/>
+    <rect x="28" y="60" width="14" height="12" rx="2" fill="#BA7517"/>
+    <path d="M 8 8 Q 4 26 8 44 L 62 44 Q 66 26 62 8 Z" fill="#FAC775"/>
+    <path d="M 8 14 Q -2 22 2 34 Q 6 32 8 26" fill="none" stroke="#EF9F27" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 62 14 Q 72 22 68 34 Q 64 32 62 26" fill="none" stroke="#EF9F27" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="35" cy="8" rx="26" ry="7" fill="#FAC775"/>
+    <ellipse cx="24" cy="24" rx="4" ry="10" fill="white" opacity="0.25"/>
+    <text x="35" y="36" font-size="12" fill="#854F0B" font-weight="700" text-anchor="middle" font-family="sans-serif">1</text>
+    <text x="35" y="6" font-size="10" fill="#EF9F27" text-anchor="middle">★</text>
+  </svg>`;
+
+  const silverTrophy = `<svg viewBox="0 0 60 70" width="52" height="62">
+    <rect x="18" y="60" width="24" height="5" rx="2" fill="#B4B2A9"/>
+    <rect x="24" y="52" width="12" height="10" rx="2" fill="#888780"/>
+    <path d="M 10 8 Q 6 22 10 36 L 50 36 Q 54 22 50 8 Z" fill="#D3D1C7"/>
+    <path d="M 10 12 Q 2 18 4 28 Q 8 26 10 22" fill="none" stroke="#B4B2A9" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M 50 12 Q 58 18 56 28 Q 52 26 50 22" fill="none" stroke="#B4B2A9" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="30" cy="8" rx="20" ry="6" fill="#D3D1C7"/>
+    <ellipse cx="22" cy="20" rx="3" ry="8" fill="white" opacity="0.25"/>
+    <text x="30" y="30" font-size="10" fill="#888780" font-weight="700" text-anchor="middle" font-family="sans-serif">2</text>
+  </svg>`;
+
+  const bronzeTrophy = `<svg viewBox="0 0 60 65" width="48" height="56">
+    <rect x="18" y="56" width="24" height="5" rx="2" fill="#854F0B"/>
+    <rect x="24" y="48" width="12" height="10" rx="2" fill="#633806"/>
+    <path d="M 10 8 Q 6 20 10 32 L 50 32 Q 54 20 50 8 Z" fill="#F0997B"/>
+    <path d="M 10 12 Q 2 18 4 26 Q 8 24 10 20" fill="none" stroke="#D85A30" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M 50 12 Q 58 18 56 26 Q 52 24 50 20" fill="none" stroke="#D85A30" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="30" cy="8" rx="20" ry="6" fill="#F0997B"/>
+    <ellipse cx="22" cy="18" rx="3" ry="7" fill="white" opacity="0.25"/>
+    <text x="30" y="26" font-size="10" fill="#712B13" font-weight="700" text-anchor="middle" font-family="sans-serif">3</text>
+  </svg>`;
+
+  const html = `
+    <div style="background:#064E3B;border-radius:16px;padding:20px 16px 0;overflow:hidden">
+      <div style="text-align:center;margin-bottom:20px;padding:0 8px">
+        <div style="font-size:12px;color:#9FE1CB;line-height:1.8">Kami dari Yayasan GDBUG PADEL,</div>
+        <div style="font-size:12px;color:#9FE1CB;line-height:1.8">mengucapkan.....</div>
+        <div style="font-size:17px;font-weight:700;color:#FAC775;margin-top:6px;line-height:1.4">SELAMAT untuk pemain tergebug minggu ini</div>
+      </div>
+      <div style="display:flex;align-items:flex-end;justify-content:center;gap:4px">
+        <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+          <div style="font-size:12px;font-weight:600;color:#FFFFFF;text-align:center;margin-bottom:6px">${r2?r2.name:'-'}</div>
+          ${silverTrophy}
+          <div style="background:#5DCAA5;border-radius:6px 6px 0 0;width:100%;height:60px;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:26px;color:#04342C;font-weight:700">2</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+          <div style="font-size:14px;font-weight:700;color:#FAC775;text-align:center;margin-bottom:6px">${r1?r1.name:'-'}</div>
+          ${goldTrophy}
+          <div style="background:#0F6E56;border-radius:6px 6px 0 0;width:100%;height:90px;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:32px;color:#6EE7B7;font-weight:700">1</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+          <div style="font-size:12px;font-weight:600;color:#FFFFFF;text-align:center;margin-bottom:6px">${r3?r3.name:'-'}</div>
+          ${bronzeTrophy}
+          <div style="background:#5DCAA5;border-radius:6px 6px 0 0;width:100%;height:44px;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:20px;color:#04342C;font-weight:700">3</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  const content = document.getElementById('podium-content');
+  if(content) content.innerHTML = html;
+  const modal = document.getElementById('podium-modal');
+  if(modal){ modal.style.display = 'block'; document.body.style.overflow = 'hidden'; }
 }
