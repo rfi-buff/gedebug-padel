@@ -21,22 +21,20 @@ function toggleCourtPlay(ri, ci){
   if(status === 'playing'){
     db.ref(`session/rounds/${ri}/courts/${ci}/status`).set('waiting');
   } else {
-    if(getActiveCount() >= 2){ showToast('Only 2 matches can play at the same time'); return; }
+    if(getActiveCount() >= State.numCourts){ showToast(`Only ${State.numCourts} matches can play at the same time`); return; }
     db.ref(`session/rounds/${ri}/courts/${ci}/status`).set('playing');
   }
 }
 
-function changeScore(ri, ci, team, delta){
+function changeScore(ri, ci, team, val){
   if(!State.currentUser) return;
   const court = State.rounds[ri].courts[ci];
   if(court.locked){ showToast('Match is finalized 🔒'); return; }
   if((court.status||'waiting') !== 'playing'){ showToast('Start the match first ▶️'); return; }
-  const maxScore = State.matchFormat === 2 ? 5 : 4;
-  let nA = court.scoreA, nB = court.scoreB;
-  // Both formats: scores sum to max, +/- auto-adjusts other side
-  if(team==='A'){ nA = Math.max(0,Math.min(maxScore,court.scoreA+delta)); if(nA===court.scoreA) return; nB = maxScore-nA; }
-  else { nB = Math.max(0,Math.min(maxScore,court.scoreB+delta)); if(nB===court.scoreB) return; nA = maxScore-nB; }
-  db.ref(`session/rounds/${ri}/courts/${ci}`).update({scoreA:nA, scoreB:nB});
+  const score = parseInt(val);
+  if(isNaN(score)) return;
+  const update = team === 'A' ? {scoreA: score} : {scoreB: score};
+  db.ref(`session/rounds/${ri}/courts/${ci}`).update(update);
 }
 
 function finalizeCourt(ri, ci){
@@ -59,7 +57,6 @@ function courtHTML(ri, ci, court){
   const isDone = !!court.locked || court.status === 'done';
   const isPlaying = (court.status||'waiting') === 'playing';
   const isWaiting = !isDone && !isPlaying;
-
   const sA = court.scoreA||0, sB = court.scoreB||0;
   const hasScore = sA+sB > 0;
   const aWins = hasScore&&sA>sB, bWins = hasScore&&sB>sA, draw = hasScore&&sA===sB;
@@ -68,6 +65,10 @@ function courtHTML(ri, ci, court){
   const sAc = aWins?'var(--green)':draw?'var(--amber)':bWins?'var(--red)':'var(--text)';
   const sBc = bWins?'var(--green)':draw?'var(--amber)':aWins?'var(--red)':'var(--text)';
 
+  const formatLabel = State.matchFormat === 2
+    ? '<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(255,181,71,0.12);color:var(--amber);margin-left:6px">Americano</span>'
+    : '<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(0,180,100,0.1);color:var(--green);margin-left:6px">Game of 5</span>';
+
   const statusLabel = isDone
     ? '<span style="font-size:10px;color:var(--text3)">🔒 Done</span>'
     : isPlaying
@@ -75,21 +76,36 @@ function courtHTML(ri, ci, court){
       : '<span style="font-size:10px;color:var(--text3)">⏳ Waiting</span>';
 
   const canScore = State.currentUser && isPlaying && !isDone;
-  const scoreBlock = canScore
-    ? `<div class="score-block">
-        <div class="score-row"><button class="sc-btn" onclick="changeScore(${ri},${ci},'A',-1)">&#8722;</button><div class="sc-val" id="sv-${ri}-${ci}-A" style="color:${sAc}">${sA}</div><button class="sc-btn" onclick="changeScore(${ri},${ci},'A',1)">+</button></div>
-        <div class="score-row"><button class="sc-btn" onclick="changeScore(${ri},${ci},'B',-1)">&#8722;</button><div class="sc-val" id="sv-${ri}-${ci}-B" style="color:${sBc}">${sB}</div><button class="sc-btn" onclick="changeScore(${ri},${ci},'B',1)">+</button></div>
-      </div>`
-    : `<div style="text-align:center;flex-shrink:0;padding:0 8px">
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:${sAc}">${sA}</div>
-        <div style="font-size:11px;color:var(--text3)">${isDone?'🔒':'⏳'}</div>
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:${sBc}">${sB}</div>
+  let scoreBlock = '';
+  if(canScore){
+    if(State.matchFormat === 2){
+      // Americano: dropdown 0-30
+      const optsA = Array.from({length:31},(_,i)=>`<option value="${i}" ${sA===i?'selected':''}>${i}</option>`).join('');
+      const optsB = Array.from({length:31},(_,i)=>`<option value="${i}" ${sB===i?'selected':''}>${i}</option>`).join('');
+      scoreBlock = `<div style="display:flex;flex-direction:column;gap:8px;align-items:center;flex-shrink:0">
+        <select onchange="changeScore(${ri},${ci},'A',this.value)" style="width:64px;padding:6px;border-radius:8px;background:var(--bg3);border:0.5px solid var(--border2);color:${sAc};font-family:'Syne',sans-serif;font-size:16px;font-weight:700;text-align:center;cursor:pointer;outline:none">${optsA}</select>
+        <div style="font-size:10px;color:var(--text3)">vs</div>
+        <select onchange="changeScore(${ri},${ci},'B',this.value)" style="width:64px;padding:6px;border-radius:8px;background:var(--bg3);border:0.5px solid var(--border2);color:${sBc};font-family:'Syne',sans-serif;font-size:16px;font-weight:700;text-align:center;cursor:pointer;outline:none">${optsB}</select>
       </div>`;
+    } else {
+      // Game of 5: +/- buttons, auto-sum to 5
+      scoreBlock = `<div class="score-block">
+        <div class="score-row"><button class="sc-btn" onclick="changeScore(${ri},${ci},'A',${Math.max(0,sA-1)})">&#8722;</button><div class="sc-val" style="color:${sAc}">${sA}</div><button class="sc-btn" onclick="changeScore(${ri},${ci},'A',${Math.min(5,sA+1)})">+</button></div>
+        <div class="score-row"><button class="sc-btn" onclick="changeScore(${ri},${ci},'B',${Math.max(0,sB-1)})">&#8722;</button><div class="sc-val" style="color:${sBc}">${sB}</div><button class="sc-btn" onclick="changeScore(${ri},${ci},'B',${Math.min(5,sB+1)})">+</button></div>
+      </div>`;
+    }
+  } else {
+    scoreBlock = `<div style="text-align:center;flex-shrink:0;padding:0 8px">
+      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:${sAc}">${sA}</div>
+      <div style="font-size:11px;color:var(--text3)">${isDone?'🔒':'⏳'}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:${sBc}">${sB}</div>
+    </div>`;
+  }
 
   const activeCount = getActiveCount();
-  const canStart = activeCount < 2;
+  const canStart = activeCount < State.numCourts;
   const opacity = isWaiting ? 'opacity:0.5;' : '';
-  const border = isPlaying&&(aWins||bWins) ? 'border-color:rgba(0,201,141,0.3)' : isDone ? 'border-color:rgba(255,255,255,0.04)' : '';
+  const border = isPlaying&&(aWins||bWins) ? 'border-color:rgba(0,180,100,0.3)' : isDone ? 'border-color:rgba(0,0,0,0.04)' : '';
 
   let actionBtn = '';
   if(State.currentUser){
@@ -100,16 +116,12 @@ function courtHTML(ri, ci, court){
     } else if(isPlaying){
       actionBtn = `<div style="display:flex;gap:6px;margin-top:10px">
         <button onclick="toggleCourtPlay(${ri},${ci})" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:11px;cursor:pointer">⏹ Stop</button>
-        <button onclick="finalizeCourt(${ri},${ci})" style="flex:2;padding:8px;border-radius:8px;border:0.5px solid rgba(0,201,141,0.3);background:rgba(0,201,141,0.08);color:var(--green);font-size:11px;font-weight:600;cursor:pointer">✅ Finalize</button>
+        <button onclick="finalizeCourt(${ri},${ci})" style="flex:2;padding:8px;border-radius:8px;border:0.5px solid rgba(0,180,100,0.3);background:rgba(0,180,100,0.08);color:var(--green);font-size:11px;font-weight:600;cursor:pointer">✅ Finalize</button>
       </div>`;
     } else {
-      actionBtn = `<button onclick="toggleCourtPlay(${ri},${ci})" ${canStart?'':'disabled'} style="width:100%;padding:8px;border-radius:8px;border:0.5px solid ${canStart?'rgba(0,201,141,0.3)':'var(--border2)'};background:${canStart?'rgba(0,201,141,0.08)':'transparent'};color:${canStart?'var(--green)':'var(--text3)'};font-size:11px;font-weight:600;cursor:${canStart?'pointer':'not-allowed'};margin-top:10px">▶️ Start${canStart?'':' (2 already playing)'}</button>`;
+      actionBtn = `<button onclick="toggleCourtPlay(${ri},${ci})" ${canStart?'':'disabled'} style="width:100%;padding:8px;border-radius:8px;border:0.5px solid ${canStart?'rgba(0,180,100,0.3)':'var(--border2)'};background:${canStart?'rgba(0,180,100,0.08)':'transparent'};color:${canStart?'var(--green)':'var(--text3)'};font-size:11px;font-weight:600;cursor:${canStart?'pointer':'not-allowed'};margin-top:10px">▶️ Start${canStart?'':' (all courts playing)'}</button>`;
     }
   }
-
-  const formatLabel = State.matchFormat === 2
-    ? '<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(255,181,71,0.12);color:var(--amber);margin-left:6px">Game of 5</span>'
-    : '<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(0,201,141,0.1);color:var(--green);margin-left:6px">Game of 4</span>';
 
   return `<div class="court-card" style="${opacity}${border}">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -135,7 +147,7 @@ function courtHTML(ri, ci, court){
 function renderSession(){
   const active = State.players.filter(p => p.active);
   const meta = document.getElementById('session-meta');
-  if(meta) meta.textContent = State.rounds.length ? `${active.length} players · ${State.rounds.length} rounds · 2 courts` : 'No session generated yet';
+  if(meta) meta.textContent = State.rounds.length ? `${active.length} players · ${State.rounds.length} rounds · ${State.numCourts} courts` : 'No session generated yet';
   const empty = document.getElementById('session-empty');
   if(empty) empty.style.display = State.rounds.length ? 'none' : 'block';
   const sa = document.getElementById('session-actions');
@@ -239,6 +251,7 @@ function finishSession(){
   db.ref('session/date').set('');
   db.ref('session/generatedBy').remove();
   db.ref('session/matchFormat').remove();
+  db.ref('session/numCourts').remove();
   db.ref('session/weeklyRanking').set(sessionRanking);
   showToast('Results saved!');
   showScreen('rankings');

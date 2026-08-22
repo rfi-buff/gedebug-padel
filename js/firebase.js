@@ -37,7 +37,8 @@ const State = {
   isLight: false,
   isFirebaseInited: false,
   sessionGeneratedBy: null,
-  matchFormat: 1,  // 1 = Game of 4, 2 = Best of 5
+  matchFormat: 1,  // 1 = Game of 5, 2 = Americano
+  numCourts: 2,
   weeklyRanking: []
 };
 

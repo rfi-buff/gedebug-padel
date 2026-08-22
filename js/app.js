@@ -63,6 +63,11 @@ function initFirebaseListeners(){
     renderRankings();
   });
 
+  db.ref('session/numCourts').on('value', snap => {
+    State.numCourts = snap.val()||2;
+    renderSession();
+  });
+
   db.ref('session/matchFormat').on('value', snap => {
     State.matchFormat = snap.val()||1;
     renderSession();

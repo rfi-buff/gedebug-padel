@@ -116,13 +116,30 @@
       <div class="section-label" style="margin-top:0;margin-bottom:10px">Match Format</div>
       <div style="display:flex;gap:8px;margin-bottom:16px">
         <div id="fmt-1" onclick="selectFormat(1)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:0.5px solid var(--green);background:var(--green-dim);cursor:pointer;text-align:center">
-          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--green)">Game of 4</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:3px">4-0 · 3-1 · 2-2</div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--green)">Game of 5</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:3px">5-0 · 4-1 · 3-2</div>
         </div>
         <div id="fmt-2" onclick="selectFormat(2)" style="flex:1;padding:12px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg3);cursor:pointer;text-align:center">
-          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text2)">Game of 5</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:3px">5-0 · 4-1 · 3-2</div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text2)">Americano</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">Points 0–30</div>
         </div>
+      </div>
+
+      <!-- Number of Courts -->
+      <div class="section-label" style="margin-top:0;margin-bottom:10px">Number of Courts</div>
+      <div style="margin-bottom:16px">
+        <select id="courts-select" onchange="selectCourts(parseInt(this.value))" style="width:100%;padding:12px 14px;border-radius:var(--radius-sm);border:0.5px solid var(--green);background:var(--green-dim);color:var(--green);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none">
+          <option value="1">1 Court — min 4 players</option>
+          <option value="2" selected>2 Courts — min 8 players</option>
+          <option value="3">3 Courts — min 12 players</option>
+          <option value="4">4 Courts — min 16 players</option>
+          <option value="5">5 Courts — min 20 players</option>
+          <option value="6">6 Courts — min 24 players</option>
+          <option value="7">7 Courts — min 28 players</option>
+          <option value="8">8 Courts — min 32 players</option>
+          <option value="9">9 Courts — min 36 players</option>
+          <option value="10">10 Courts — min 40 players</option>
+        </select>
       </div>
 
       <button class="btn-green" onclick="generateSession()">Generate this week's matches</button>

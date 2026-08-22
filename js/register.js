@@ -9,23 +9,20 @@
 
 function selectFormat(fmt){
   State.matchFormat = fmt;
-  const f1 = document.getElementById('fmt-1');
-  const f2 = document.getElementById('fmt-2');
-  if(fmt === 1){
-    f1.style.border = '0.5px solid var(--green)';
-    f1.style.background = 'var(--green-dim)';
-    f1.querySelector('div').style.color = 'var(--green)';
-    f2.style.border = '0.5px solid var(--border2)';
-    f2.style.background = 'var(--bg3)';
-    f2.querySelector('div').style.color = 'var(--text2)';
-  } else {
-    f2.style.border = '0.5px solid var(--green)';
-    f2.style.background = 'var(--green-dim)';
-    f2.querySelector('div').style.color = 'var(--green)';
-    f1.style.border = '0.5px solid var(--border2)';
-    f1.style.background = 'var(--bg3)';
-    f1.querySelector('div').style.color = 'var(--text2)';
-  }
+  [1,2].forEach(f => {
+    const el = document.getElementById(`fmt-${f}`);
+    if(!el) return;
+    const on = f === fmt;
+    el.style.border = `0.5px solid ${on?'var(--green)':'var(--border2)'}`;
+    el.style.background = on ? 'var(--green-dim)' : 'var(--bg3)';
+    el.querySelector('div').style.color = on ? 'var(--green)' : 'var(--text2)';
+  });
+}
+
+function selectCourts(n){
+  State.numCourts = n;
+  const el = document.getElementById('courts-select');
+  if(el) el.value = n;
 }
 
 function renderPills(){
@@ -112,9 +109,13 @@ function generateSession(){
 
   const active = State.players.filter(p => p.active);
   const err = document.getElementById('reg-err');
-  if(active.length < 4){ err.textContent = 'Need at least 4 players selected.'; return; }
+  const minPlayers = State.numCourts * 4;
+  if(active.length < minPlayers){
+    err.textContent = `Need at least ${minPlayers} players for ${State.numCourts} courts (${State.numCourts} × 4).`;
+    return;
+  }
   err.textContent = '';
-  const sitOutPerRound = Math.max(0, active.length - 8);
+  const sitOutPerRound = Math.max(0, active.length - (State.numCourts * 4));
   const newRounds = [];
   const sitCount = {};
   const partnerCount = {}, lastPartnerRound = {}, opponentCount = {};
@@ -127,12 +128,13 @@ function generateSession(){
       sitters.forEach(p => sitCount[p.name]++);
     }
     const pool = active.filter(p => !sitters.some(s => s.name === p.name));
-    newRounds.push(buildSmartRound(pool, sitters, false, partnerCount, lastPartnerRound, opponentCount, r));
+    newRounds.push(buildSmartRound(pool, sitters, false, partnerCount, lastPartnerRound, opponentCount, r, State.numCourts));
   }
   db.ref('session/rounds').set(newRounds);
   db.ref('session/date').set(dateStr);
   db.ref('session/generatedBy').set(State.currentUser.email);
   db.ref('session/matchFormat').set(State.matchFormat);
+  db.ref('session/numCourts').set(State.numCourts);
   db.ref('session/weeklyRanking').remove();
   showToast('Session generated!');
   showScreen('matches');
@@ -147,15 +149,16 @@ function shuffle(arr){
   return a;
 }
 
-function buildSmartRound(pool, sitters, isExtra, partnerCount, lastPartnerRound, opponentCount, roundIndex){
+function buildSmartRound(pool, sitters, isExtra, partnerCount, lastPartnerRound, opponentCount, roundIndex, numCourts){
   const ri = roundIndex || 0;
+  const nc = numCourts || 2;
   let best = null, bestScore = Infinity;
 
   for(let t = 0; t < 1000; t++){
     const sh = shuffle(pool);
     let score = 0;
     const courts = [];
-    for(let c = 0; c < 2 && sh.length >= 4; c++){
+    for(let c = 0; c < nc && sh.length >= 4; c++){
       const [a,b,x,y] = [sh.shift(), sh.shift(), sh.shift(), sh.shift()];
       // Partner scoring with heavy recency penalty
       [[a.name,b.name],[x.name,y.name]].forEach(([p1,p2]) => {
@@ -204,7 +207,7 @@ function addRound(){
   if(!State.currentUser){ showToast('Please sign in first'); return; }
   const active = State.players.filter(p => p.active);
   if(active.length < 4) return;
-  const sitOutPerRound = Math.max(0, active.length - 8);
+  const sitOutPerRound = Math.max(0, active.length - (State.numCourts * 4));
   let sitters = [];
   if(sitOutPerRound > 0){
     const sitCount = {};
@@ -229,7 +232,7 @@ function addRound(){
     });
   });
   const pool = active.filter(p => !sitters.some(s => s.name === p.name));
-  const updated = [...State.rounds, buildSmartRound(pool, sitters, true, partnerCount, lastPartnerRound, opponentCount, State.rounds.length)];
+  const updated = [...State.rounds, buildSmartRound(pool, sitters, true, partnerCount, lastPartnerRound, opponentCount, State.rounds.length, State.numCourts)];
   db.ref('session/rounds').set(updated);
   showToast('Extra round added!');
   setTimeout(() => { const s = document.getElementById('session-scroll'); if(s) s.scrollTop = s.scrollHeight; }, 400);
