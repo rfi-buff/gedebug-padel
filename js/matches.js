@@ -33,6 +33,7 @@ function changeScore(ri, ci, team, val){
   if((court.status||'waiting') !== 'playing'){ showToast('Start the match first ▶️'); return; }
   const score = parseInt(val);
   if(isNaN(score)) return;
+  // Both formats: independent score entry
   const update = team === 'A' ? {scoreA: score} : {scoreB: score};
   db.ref(`session/rounds/${ri}/courts/${ci}`).update(update);
 }
@@ -67,7 +68,7 @@ function courtHTML(ri, ci, court){
 
   const formatLabel = State.matchFormat === 2
     ? '<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(255,181,71,0.12);color:var(--amber);margin-left:6px">Americano</span>'
-    : '<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(0,180,100,0.1);color:var(--green);margin-left:6px">Game of 5</span>';
+    : '<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(0,180,100,0.1);color:var(--green);margin-left:6px">Tennis Format</span>';
 
   const statusLabel = isDone
     ? '<span style="font-size:10px;color:var(--text3)">🔒 Done</span>'
@@ -78,22 +79,15 @@ function courtHTML(ri, ci, court){
   const canScore = State.currentUser && isPlaying && !isDone;
   let scoreBlock = '';
   if(canScore){
-    if(State.matchFormat === 2){
-      // Americano: dropdown 0-30
-      const optsA = Array.from({length:31},(_,i)=>`<option value="${i}" ${sA===i?'selected':''}>${i}</option>`).join('');
-      const optsB = Array.from({length:31},(_,i)=>`<option value="${i}" ${sB===i?'selected':''}>${i}</option>`).join('');
-      scoreBlock = `<div style="display:flex;flex-direction:column;gap:8px;align-items:center;flex-shrink:0">
-        <select onchange="changeScore(${ri},${ci},'A',this.value)" style="width:64px;padding:6px;border-radius:8px;background:var(--bg3);border:0.5px solid var(--border2);color:${sAc};font-family:'Syne',sans-serif;font-size:16px;font-weight:700;text-align:center;cursor:pointer;outline:none">${optsA}</select>
-        <div style="font-size:10px;color:var(--text3)">vs</div>
-        <select onchange="changeScore(${ri},${ci},'B',this.value)" style="width:64px;padding:6px;border-radius:8px;background:var(--bg3);border:0.5px solid var(--border2);color:${sBc};font-family:'Syne',sans-serif;font-size:16px;font-weight:700;text-align:center;cursor:pointer;outline:none">${optsB}</select>
-      </div>`;
-    } else {
-      // Game of 5: +/- buttons, auto-sum to 5
-      scoreBlock = `<div class="score-block">
-        <div class="score-row"><button class="sc-btn" onclick="changeScore(${ri},${ci},'A',${Math.max(0,sA-1)})">&#8722;</button><div class="sc-val" style="color:${sAc}">${sA}</div><button class="sc-btn" onclick="changeScore(${ri},${ci},'A',${Math.min(5,sA+1)})">+</button></div>
-        <div class="score-row"><button class="sc-btn" onclick="changeScore(${ri},${ci},'B',${Math.max(0,sB-1)})">&#8722;</button><div class="sc-val" style="color:${sBc}">${sB}</div><button class="sc-btn" onclick="changeScore(${ri},${ci},'B',${Math.min(5,sB+1)})">+</button></div>
-      </div>`;
-    }
+    // Both formats use dropdown — Tennis Format 0-7, Americano 0-30, independent entry
+    const maxScore = State.matchFormat === 1 ? 7 : 30;
+    const optsA = Array.from({length:maxScore+1},(_,i)=>`<option value="${i}" ${sA===i?'selected':''}>${i}</option>`).join('');
+    const optsB = Array.from({length:maxScore+1},(_,i)=>`<option value="${i}" ${sB===i?'selected':''}>${i}</option>`).join('');
+    scoreBlock = `<div style="display:flex;flex-direction:column;gap:8px;align-items:center;flex-shrink:0">
+      <select onchange="changeScore(${ri},${ci},'A',this.value)" style="width:64px;padding:6px;border-radius:8px;background:var(--bg3);border:0.5px solid var(--border2);color:${sAc};font-family:'Syne',sans-serif;font-size:18px;font-weight:700;text-align:center;cursor:pointer;outline:none">${optsA}</select>
+      <div style="font-size:10px;color:var(--text3)">vs</div>
+      <select onchange="changeScore(${ri},${ci},'B',this.value)" style="width:64px;padding:6px;border-radius:8px;background:var(--bg3);border:0.5px solid var(--border2);color:${sBc};font-family:'Syne',sans-serif;font-size:18px;font-weight:700;text-align:center;cursor:pointer;outline:none">${optsB}</select>
+    </div>`;
   } else {
     scoreBlock = `<div style="text-align:center;flex-shrink:0;padding:0 8px">
       <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:${sAc}">${sA}</div>
