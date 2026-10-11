@@ -60,7 +60,7 @@ function renderTournamentList(body){
     h += `<div class="empty" style="margin-top:24px">
       <div class="empty-icon">🏆</div>
       <div class="empty-title">No tournaments yet</div>
-      <div class="empty-sub">Admins can create a tournament from here</div>
+      <div class="empty-sub">${canCreate ? 'Tap "+ Create Tournament" to get started' : 'Admins can create a tournament from here'}</div>
     </div>`;
   } else {
     h += `<div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 10px">Tournaments</div>`;
@@ -808,8 +808,6 @@ function initTournamentListener(){
     }
 
     const body = document.getElementById('tournament-body');
-    if(body && document.getElementById('sc-tournament')?.classList.contains('active')){
-      renderTournament();
-    }
+    if(body) renderTournament();
   });
 }
