@@ -1,7 +1,7 @@
 /*
 ==============================================
   GeDebug Padel App - PRODUCTION
-  Version : v2.1.0
+  Version : v2.2.0
   File    : js/app.js
   Module  : App - Firebase listeners & navigation
 ==============================================
@@ -19,6 +19,7 @@ function showScreen(id){
   if(id==='history') renderHistory();
   if(id==='admin') renderAdminList();
   if(id==='playerranks') renderPlayerRanks();
+  if(id==='tournament') renderTournament();
 }
 
 // ── Seed default players ──
@@ -135,5 +136,6 @@ function initFirebaseListeners(){
   const topDate = document.getElementById('top-date');
   if(topDate) topDate.textContent = dateStr;
 
+  initTournamentListener();
   seedDefaultPlayers();
 }
