@@ -277,35 +277,52 @@ function assignCourtNumbers(courts, numCourts, prevCourts){
 }
 
 // ── Round Robin: every pair plays every other pair ──
+// Uses the Circle/Berger algorithm to guarantee no two consecutive rounds
+// have the same matchups. For odd number of pairs, adds a bye slot.
 function generateRoundRobinMatches(pairs, numCourts){
   const rounds = [];
   const n = pairs.length;
-  const allPairings = [];
-  for(let i = 0; i < n; i++){
-    for(let j = i+1; j < n; j++){
-      allPairings.push([pairs[i], pairs[j]]);
+
+  // Circle algorithm needs even number of participants
+  // If odd, add a dummy 'BYE' — any pair matched vs BYE sits out that round
+  const roster = n % 2 === 0 ? [...pairs] : [...pairs, '__BYE__'];
+  const size = roster.length; // always even
+
+  // Fix first entry, rotate the rest — produces (size-1) rounds
+  // Each round has (size/2) matchups, all unique across rounds
+  const fixed = roster[0];
+  const rotating = roster.slice(1);
+
+  for(let r = 0; r < size - 1; r++){
+    // Build this round's pairings using the circle layout
+    const circle = [fixed, ...rotating];
+    const roundPairings = [];
+    for(let i = 0; i < size / 2; i++){
+      const a = circle[i];
+      const b = circle[size - 1 - i];
+      // Skip bye matchups
+      if(a === '__BYE__' || b === '__BYE__') continue;
+      roundPairings.push([a, b]);
+    }
+
+    // Rotate: move last element to front of rotating array
+    rotating.unshift(rotating.pop());
+
+    if(roundPairings.length === 0) continue;
+
+    // Split into chunks of numCourts (one "game slot" per chunk)
+    // Each chunk becomes its own round card
+    for(let start = 0; start < roundPairings.length; start += numCourts){
+      const chunk = roundPairings.slice(start, start + numCourts);
+      const courts = chunk.map(([a, b]) => ({
+        pairA: a, pairB: b, scoreA: 0, scoreB: 0, status: 'pending'
+      }));
+      const prev = rounds.length ? rounds[rounds.length - 1].courts : null;
+      assignCourtNumbers(courts, numCourts, prev);
+      rounds.push({ courts, status: 'pending' });
     }
   }
 
-  const scheduled = new Array(allPairings.length).fill(false);
-  while(scheduled.some(x => !x)){
-    const round = { courts: [], status: 'pending' };
-    const usedPairs = new Set();
-    for(let k = 0; k < allPairings.length && round.courts.length < numCourts; k++){
-      if(scheduled[k]) continue;
-      const [a, b] = allPairings[k];
-      if(usedPairs.has(a) || usedPairs.has(b)) continue;
-      round.courts.push({ pairA: a, pairB: b, scoreA: 0, scoreB: 0, status: 'pending' });
-      usedPairs.add(a);
-      usedPairs.add(b);
-      scheduled[k] = true;
-    }
-    if(round.courts.length){
-      const prev = rounds.length ? rounds[rounds.length-1].courts : null;
-      assignCourtNumbers(round.courts, numCourts, prev);
-      rounds.push(round);
-    } else break;
-  }
   return rounds;
 }
 
@@ -750,15 +767,35 @@ function tAddRound(key){
   const t = TState.activeTournament;
   if(!t || !t.pairs) return;
 
+  // Generate a full fresh round-robin schedule
   const allRounds = generateRoundRobinMatches(t.pairs, t.numCourts);
+
+  // Figure out which pairings have already been scheduled (existing matches)
+  const playedKeys = new Set();
+  (t.matches || []).forEach(round => {
+    round.courts.forEach(c => {
+      if(c.pairA && c.pairB) playedKeys.add(pairKey(c.pairA, c.pairB));
+    });
+  });
+
+  // Filter allRounds to only rounds containing at least one NEW pairing
+  // (pairings not yet in the existing schedule)
+  // If all pairings already played, allow a full repeat (second cycle)
+  let newRounds = allRounds.filter(r =>
+    r.courts.some(c => !playedKeys.has(pairKey(c.pairA, c.pairB)))
+  );
+  if(newRounds.length === 0) newRounds = allRounds; // second cycle — full repeat
+
+  // Reset scores and re-assign court numbers
   const lastExisting = t.matches && t.matches.length ? t.matches[t.matches.length-1].courts : null;
-  const newRounds = allRounds.map((r, ri) => {
+  const readyRounds = newRounds.map((r, ri) => {
     const courts = r.courts.map(c => ({ ...c, scoreA: 0, scoreB: 0, status: 'pending' }));
-    const prevCourts = ri === 0 ? lastExisting : allRounds[ri-1].courts;
+    const prevCourts = ri === 0 ? lastExisting : newRounds[ri-1].courts;
     assignCourtNumbers(courts, t.numCourts, prevCourts);
     return { ...r, courts };
   });
-  const updated = [...(t.matches || []), ...newRounds];
+
+  const updated = [...(t.matches || []), ...readyRounds];
   db.ref(`tournaments/${key}/matches`).set(updated, err => {
     if(!err){
       showToast('New rounds added!');
