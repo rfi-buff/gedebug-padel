@@ -273,59 +273,72 @@ function assignCourtNumbers(courts, numCourts, prevCourts){
 }
 
 // ── Round Robin: every pair plays every other pair ──
-// Uses the Circle/Berger algorithm to guarantee no two consecutive rounds
-// have the same matchups. For odd number of pairs, adds a bye slot.
+// Step 1: use the Circle/Berger algorithm to generate ALL pairings in order,
+//         each pair appears exactly once per "cycle rotation".
+// Step 2: greedily fill rounds of exactly numCourts simultaneous matches,
+//         ensuring no pair plays twice in the same round.
+//         This means 8 pairs / 3 courts → each round has 3 matches (6 pairs play,
+//         2 pairs rest), pulling from consecutive circle rotations as needed.
 function generateRoundRobinMatches(pairs, numCourts){
   const rounds = [];
-  const n = pairs.length;
+  const allPairs = [...pairs]; // real pairs only, no BYE
+  const n = allPairs.length;
 
-  // Circle algorithm needs even number of participants
-  // If odd, add a dummy 'BYE' — any pair matched vs BYE sits out that round
-  const roster = n % 2 === 0 ? [...pairs] : [...pairs, '__BYE__'];
-  const size = roster.length; // always even
+  // Circle algorithm needs even number — add dummy BYE if odd
+  const roster = n % 2 === 0 ? [...allPairs] : [...allPairs, '__BYE__'];
+  const size = roster.length;
 
-  // Fix first entry, rotate the rest — produces (size-1) rounds
-  // Each round has (size/2) matchups, all unique across rounds
+  // Generate all pairings from every circle rotation (ordered)
   const fixed = roster[0];
   const rotating = roster.slice(1);
+  const allPairings = []; // flat ordered list of [pairA, pairB]
 
   for(let r = 0; r < size - 1; r++){
-    // Build this round's pairings using the circle layout
     const circle = [fixed, ...rotating];
-    const roundPairings = [];
     for(let i = 0; i < size / 2; i++){
       const a = circle[i];
       const b = circle[size - 1 - i];
-      // Skip bye matchups
-      if(a === '__BYE__' || b === '__BYE__') continue;
-      roundPairings.push([a, b]);
+      if(a !== '__BYE__' && b !== '__BYE__') allPairings.push([a, b]);
     }
-
-    // Rotate: move last element to front of rotating array
     rotating.unshift(rotating.pop());
+  }
 
-    if(roundPairings.length === 0) continue;
+  // Greedily build rounds: each round picks up to numCourts matches
+  // from the remaining pool, with the constraint that no pair appears twice.
+  const remaining = [...allPairings];
 
-    // Split into chunks of numCourts (one "game slot" per chunk)
-    // Each chunk becomes its own round card
-    // Track which pairs are resting (not playing) in each chunk
-    const playingInRound = new Set(roundPairings.flat());
-    const allPairs = pairs.filter(p => p !== '__BYE__');
+  while(remaining.length > 0){
+    const roundMatches = [];
+    const usedThisRound = new Set();
+    const notUsed = [];
 
-    for(let start = 0; start < roundPairings.length; start += numCourts){
-      const chunk = roundPairings.slice(start, start + numCourts);
-      const courts = chunk.map(([a, b]) => ({
-        pairA: a, pairB: b, scoreA: 0, scoreB: 0, status: 'pending'
-      }));
-      const prev = rounds.length ? rounds[rounds.length - 1].courts : null;
-      assignCourtNumbers(courts, numCourts, prev);
-
-      // Pairs resting this chunk = all pairs minus those playing in this chunk
-      const playingThisChunk = new Set(chunk.flat());
-      const resting = allPairs.filter(p => !playingThisChunk.has(p));
-
-      rounds.push({ courts, status: 'pending', resting: resting.length ? resting : [] });
+    for(const pairing of remaining){
+      const [a, b] = pairing;
+      if(roundMatches.length < numCourts && !usedThisRound.has(a) && !usedThisRound.has(b)){
+        roundMatches.push(pairing);
+        usedThisRound.add(a);
+        usedThisRound.add(b);
+      } else {
+        notUsed.push(pairing);
+      }
     }
+
+    // Safety: if no matches could be picked (shouldn't happen), break to avoid infinite loop
+    if(roundMatches.length === 0) break;
+
+    // Replace remaining with whatever wasn't used
+    remaining.length = 0;
+    remaining.push(...notUsed);
+
+    const courts = roundMatches.map(([a, b]) => ({
+      pairA: a, pairB: b, scoreA: 0, scoreB: 0, status: 'pending'
+    }));
+    const prev = rounds.length ? rounds[rounds.length - 1].courts : null;
+    assignCourtNumbers(courts, numCourts, prev);
+
+    // Pairs resting = all pairs not playing this round
+    const resting = allPairs.filter(p => !usedThisRound.has(p));
+    rounds.push({ courts, status: 'pending', resting });
   }
 
   return rounds;
