@@ -262,18 +262,14 @@ function setTErr(msg){
   if(el) el.textContent = msg;
 }
 
-// ── Assign court numbers to a round, avoiding prev round assignments ──
+// ── Assign court numbers to a round ──
+// Always assigns COURT 1, COURT 2, COURT 3... in order.
+// Tries to avoid repeating the same court number as the previous round for each slot,
+// but always starts from Court 1 and goes up sequentially.
 function assignCourtNumbers(courts, numCourts, prevCourts){
-  const prevAssigned = prevCourts ? prevCourts.map(c => c.courtNo) : [];
-  // Build shuffled pool of court numbers [1..numCourts], preferring ones not used last round
-  const allNums = Array.from({length: numCourts}, (_,i) => i+1);
-  const preferred = allNums.filter(n => !prevAssigned.includes(n));
-  const rest = allNums.filter(n => prevAssigned.includes(n));
-  // Shuffle each group
-  const shuffle = arr => { for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; };
-  const pool = [...shuffle(preferred), ...shuffle(rest)];
-  // Assign cycling through pool
-  courts.forEach((c, i) => { c.courtNo = pool[i % pool.length]; });
+  // Simply assign Court 1, Court 2, Court 3... in order
+  // This is the clearest and most expected behaviour for players
+  courts.forEach((c, i) => { c.courtNo = (i % numCourts) + 1; });
 }
 
 // ── Round Robin: every pair plays every other pair ──
@@ -496,7 +492,7 @@ function renderTournamentActive(body){
         h += `<div style="background:var(--bg2);border:0.5px solid ${borderColor};border-radius:var(--radius);padding:14px;margin-bottom:8px">`;
 
         // Header: court label + done badge
-        const courtLabel = court.courtNo ? `Court ${court.courtNo}` : `Match ${ci+1}`;
+        const courtLabel = court.courtNo ? `COURT ${court.courtNo}` : `MATCH ${ci+1}`;
         h += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:0.06em">${courtLabel}</span>
