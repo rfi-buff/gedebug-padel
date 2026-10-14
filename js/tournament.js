@@ -308,6 +308,10 @@ function generateRoundRobinMatches(pairs, numCourts){
 
     // Split into chunks of numCourts (one "game slot" per chunk)
     // Each chunk becomes its own round card
+    // Track which pairs are resting (not playing) in each chunk
+    const playingInRound = new Set(roundPairings.flat());
+    const allPairs = pairs.filter(p => p !== '__BYE__');
+
     for(let start = 0; start < roundPairings.length; start += numCourts){
       const chunk = roundPairings.slice(start, start + numCourts);
       const courts = chunk.map(([a, b]) => ({
@@ -315,7 +319,12 @@ function generateRoundRobinMatches(pairs, numCourts){
       }));
       const prev = rounds.length ? rounds[rounds.length - 1].courts : null;
       assignCourtNumbers(courts, numCourts, prev);
-      rounds.push({ courts, status: 'pending' });
+
+      // Pairs resting this chunk = all pairs minus those playing in this chunk
+      const playingThisChunk = new Set(chunk.flat());
+      const resting = allPairs.filter(p => !playingThisChunk.has(p));
+
+      rounds.push({ courts, status: 'pending', resting: resting.length ? resting : [] });
     }
   }
 
@@ -458,9 +467,19 @@ function renderTournamentActive(body){
     t.matches.forEach((round, ri) => {
       const roundLabel = round.roundName || `Round ${ri+1}`;
       const allScored = round.courts.every(c => c.status==='bye' || c.status==='done');
-      h += `<div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px">
-        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">${roundLabel}</div>
-        ${allScored?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(0,201,141,0.1);color:var(--green)">Done</span>`:''}
+      const resting = round.resting && round.resting.length ? round.resting : null;
+      const restingLabel = resting
+        ? `<span style="font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(255,181,71,0.12);color:var(--amber);font-weight:500">💤 ${resting.join(', ')}</span>`
+        : `<span style="font-size:10px;color:var(--text3)">—</span>`;
+      h += `<div style="margin:10px 0 6px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">${roundLabel}</div>
+          ${allScored?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(0,201,141,0.1);color:var(--green)">Done</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;flex-shrink:0">REST</span>
+          ${restingLabel}
+        </div>
       </div>`;
 
       round.courts.forEach((court, ci) => {
