@@ -326,6 +326,11 @@ function generateRoundRobinMatches(pairs, numCourts){
     // Safety: if no matches could be picked (shouldn't happen), break to avoid infinite loop
     if(roundMatches.length === 0) break;
 
+    // Don't create a partial round — if we couldn't fill all courts AND there are
+    // still unplayed pairings left, stop here. The leftover pairings will be picked
+    // up when the admin taps "+ More Rounds" (second cycle reuses them).
+    if(roundMatches.length < numCourts && notUsed.length > 0) break;
+
     // Replace remaining with whatever wasn't used
     remaining.length = 0;
     remaining.push(...notUsed);
