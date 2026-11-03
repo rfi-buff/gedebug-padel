@@ -45,15 +45,13 @@ function renderTournament(){
 //  TOURNAMENT LIST VIEW
 // ════════════════════════════════════════════
 function renderTournamentList(body){
-  const canCreate = State.isAdmin && !State.isGuest;
+  const canCreate = !State.isGuest && State.currentUser;
   let h = '';
 
   if(canCreate){
     h += `<div style="margin-top:16px">
       <button class="btn-green" onclick="showTournamentSetup()">+ Create Tournament</button>
     </div>`;
-  } else if(!State.isGuest && !State.isAdmin){
-    h += `<div style="margin-top:16px;padding:12px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text3);text-align:center">Only admins can create tournaments</div>`;
   }
 
   if(TState.allTournaments.length === 0){
@@ -215,7 +213,7 @@ function renderPairInputs(){
 //  CREATE TOURNAMENT & GENERATE MATCHES
 // ════════════════════════════════════════════
 function createTournament(){
-  if(!State.isAdmin){ showToast('Admin access required'); return; }
+  if(State.isGuest || !State.currentUser){ showToast('Please sign in to create a tournament'); return; }
   const nameEl = document.getElementById('t-name');
   const name = nameEl ? nameEl.value.trim() : '';
   if(!name){ setTErr('Please enter a tournament name'); return; }
@@ -406,7 +404,8 @@ function renderTournamentActive(body){
   if(!t) return;
 
   const standings = computeTStandings(t);
-  const isAdmin = State.isAdmin && !State.isGuest;
+  const canEdit = !State.isGuest && State.currentUser; // any signed-in user can score & edit
+  const isAdmin = State.isAdmin && !State.isGuest;     // only admins can delete / complete
   const isCompleted = t.status === 'completed';
 
   let h = `
@@ -541,7 +540,7 @@ function renderTournamentActive(body){
         h += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           ${tAvatar(court.pairA, pairAIdx)}
           <span style="flex:1;font-size:13px;font-weight:${aWin?'700':'500'};color:${aWin?'var(--green)':'var(--text)'}">${court.pairA}</span>`;
-        if(isAdmin && !isCompleted && !matchDone){
+        if(canEdit && !isCompleted && !matchDone){
           h += `<button onclick="tAdjScore('${tKey}',${ri},${ci},'A',-1)" class="sc-btn" style="width:30px;height:30px;font-size:18px">−</button>
           <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:${aWin?'var(--green)':bWin?'var(--red)':'var(--text)'};min-width:28px;text-align:center">${court.scoreA}</div>
           <button onclick="tAdjScore('${tKey}',${ri},${ci},'A',1)" class="sc-btn" style="width:30px;height:30px;font-size:18px">+</button>`;
@@ -558,10 +557,10 @@ function renderTournamentActive(body){
         </div>`;
 
         // Pair B row
-        h += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:${isAdmin && !isCompleted ? '12' : '0'}px">
+        h += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:${canEdit && !isCompleted ? '12' : '0'}px">
           ${tAvatar(court.pairB, pairBIdx)}
           <span style="flex:1;font-size:13px;font-weight:${bWin?'700':'500'};color:${bWin?'var(--green)':'var(--text)'}">${court.pairB}</span>`;
-        if(isAdmin && !isCompleted && !matchDone){
+        if(canEdit && !isCompleted && !matchDone){
           h += `<button onclick="tAdjScore('${tKey}',${ri},${ci},'B',-1)" class="sc-btn" style="width:30px;height:30px;font-size:18px">−</button>
           <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:${bWin?'var(--green)':aWin?'var(--red)':'var(--text)'};min-width:28px;text-align:center">${court.scoreB}</div>
           <button onclick="tAdjScore('${tKey}',${ri},${ci},'B',1)" class="sc-btn" style="width:30px;height:30px;font-size:18px">+</button>`;
@@ -571,7 +570,7 @@ function renderTournamentActive(body){
         h += `</div>`;
 
         // Match Completed button
-        if(isAdmin && !isCompleted){
+        if(canEdit && !isCompleted){
           if(!matchDone){
             h += `<button onclick="tMarkMatchDone('${tKey}',${ri},${ci},true)"
               style="width:100%;padding:9px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;margin-top:4px">
@@ -591,7 +590,7 @@ function renderTournamentActive(body){
   }
 
   // After last round — More Rounds (round robin) or Advance (knockout)
-  if(isAdmin && !isCompleted && t.matches && t.matches.length){
+  if(canEdit && !isCompleted && t.matches && t.matches.length){
     const lastRound = t.matches[t.matches.length - 1];
     const lastRoundDone = lastRound.courts.every(c => c.status==='bye' || c.status==='done');
     h += `<div style="margin-top:4px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px">`;
@@ -604,15 +603,15 @@ function renderTournamentActive(body){
     h += `</div>`;
   }
 
-  // Admin actions
-  if(isAdmin && !isCompleted){
+  // Actions
+  if(!isCompleted){
     h += `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-      <button class="btn-green" onclick="completeTournament('${TState.activeTournamentKey}')">Mark Tournament Complete</button>
-      <button class="btn-red" onclick="deleteTournament('${TState.activeTournamentKey}')">Delete Tournament</button>
+      ${canEdit ? `<button class="btn-green" onclick="completeTournament('${TState.activeTournamentKey}')">Mark Tournament Complete</button>` : ''}
+      ${isAdmin ? `<button class="btn-red" onclick="deleteTournament('${TState.activeTournamentKey}')">Delete Tournament</button>` : ''}
     </div>`;
   }
 
-  if(isAdmin && isCompleted){
+  if(isCompleted && isAdmin){
     h += `<div style="margin-top:8px;margin-bottom:8px">
       <button class="btn-red" onclick="deleteTournament('${TState.activeTournamentKey}')">Delete Tournament</button>
     </div>`;
@@ -705,7 +704,7 @@ function renderTStandings(standings, t){
 //  SCORE ADJUSTMENT
 // ════════════════════════════════════════════
 function tAdjScore(key, roundIdx, courtIdx, side, delta){
-  if(!State.isAdmin){ showToast('Admin only'); return; }
+  if(State.isGuest || !State.currentUser){ showToast('Sign in to update scores'); return; }
   const t = TState.activeTournament;
   if(!t || !t.matches) return;
   const court = t.matches[roundIdx]?.courts[courtIdx];
@@ -730,7 +729,7 @@ function tAdjScore(key, roundIdx, courtIdx, side, delta){
 //  MARK MATCH DONE / REOPEN
 // ════════════════════════════════════════════
 function tMarkMatchDone(key, roundIdx, courtIdx, done){
-  if(!State.isAdmin){ showToast('Admin only'); return; }
+  if(State.isGuest || !State.currentUser){ showToast('Sign in to update matches'); return; }
   const t = TState.activeTournament;
   if(!t || !t.matches) return;
   const court = t.matches[roundIdx]?.courts[courtIdx];
@@ -750,7 +749,7 @@ function tMarkMatchDone(key, roundIdx, courtIdx, done){
 //  ADVANCE KNOCK-OUT ROUND
 // ════════════════════════════════════════════
 function advanceKnockout(key){
-  if(!State.isAdmin){ showToast('Admin only'); return; }
+  if(State.isGuest || !State.currentUser){ showToast('Sign in to advance rounds'); return; }
   const t = TState.activeTournament;
   if(!t || t.format !== 'knockout') return;
 
@@ -796,7 +795,7 @@ function advanceKnockout(key){
 //  ADD MORE ROUNDS (Round Robin)
 // ════════════════════════════════════════════
 function tAddRound(key){
-  if(!State.isAdmin){ showToast('Admin only'); return; }
+  if(State.isGuest || !State.currentUser){ showToast('Sign in to add rounds'); return; }
   const t = TState.activeTournament;
   if(!t || !t.pairs) return;
 
@@ -842,7 +841,7 @@ function tAddRound(key){
 //  COMPLETE / DELETE TOURNAMENT
 // ════════════════════════════════════════════
 function completeTournament(key){
-  if(!State.isAdmin){ showToast('Admin only'); return; }
+  if(State.isGuest || !State.currentUser){ showToast('Sign in to complete tournament'); return; }
   if(!confirm('Mark this tournament as completed?')) return;
   db.ref(`tournaments/${key}/status`).set('completed', () => {
     showToast('Tournament completed!');
